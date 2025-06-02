@@ -240,7 +240,7 @@ export function InteractiveTimeline({
       <svg
         ref={svgRef}
         className="w-full h-full timeline-svg"
-        viewBox="0 0 400 180"
+        viewBox="0 0 400 200"
         preserveAspectRatio="none"
         onClick={handleSvgClick}
       >
