@@ -30,7 +30,7 @@ export function InteractiveTimeline({
   ): string => {
     const numPoints = 60; // More points for smoother curves
     const rawPoints: { x: number; y: number }[] = [];
-    const baseline = 165; // Move baseline down to near bottom of new taller view
+    const baseline = 172; // Move baseline down to near bottom of new taller view
     const mainClimaxCenter = 50; // Position of main climax (50% of timeline)
     const mainClimaxWidth = 12; // Width of main climax area
     const secondaryClimaxCenter = 80; // Position of secondary climax (80% of timeline)
@@ -69,8 +69,8 @@ export function InteractiveTimeline({
       const musicianVariance = seededRandom(i + 100) * 0.25;
       const finalVariance = (varianceFactor + musicianVariance) * intensity;
       
-      // Calculate y position (upward from baseline) - ensure lines touch baseline
-      const y = baseline - Math.max(2, finalVariance * 95);
+      // Calculate y position (upward from baseline) - ensure lines get very close to baseline
+      const y = baseline - Math.max(0.5, finalVariance * 95);
       
       rawPoints.push({ x, y });
     }
@@ -226,6 +226,15 @@ export function InteractiveTimeline({
 
   const playheadX = (timelineState.currentPosition / 100) * 400;
 
+  const formatCurrentTime = (position: number) => {
+    const startSeconds = 3 * 60 + 25; // 3:25
+    const endSeconds = 4 * 60 + 17; // 4:17
+    const currentSeconds = startSeconds + (position / 100) * (endSeconds - startSeconds);
+    const minutes = Math.floor(currentSeconds / 60);
+    const seconds = Math.floor(currentSeconds % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className={`relative h-64 bg-gradient-to-b from-transparent to-red-950/5 rounded-xl border border-amber-200/30 overflow-hidden ${className}`}>
       <svg
@@ -271,7 +280,7 @@ export function InteractiveTimeline({
         
         {/* Baseline (median recording range) */}
         <path
-          d="M0,165 L400,165"
+          d="M0,172 L400,172"
           stroke="#666"
           fill="none"
           strokeWidth="3"
@@ -336,14 +345,14 @@ export function InteractiveTimeline({
             x1={playheadX}
             y1="8"
             x2={playheadX}
-            y2="167"
+            y2="174"
             stroke="hsl(var(--accent))"
             strokeWidth="2.5"
             strokeDasharray="4,2"
           />
           <circle
             cx={playheadX}
-            cy="165"
+            cy="172"
             r="6"
             fill="hsl(var(--accent))"
             stroke="hsl(var(--parchment))"
@@ -356,6 +365,28 @@ export function InteractiveTimeline({
             fill="hsl(var(--accent))"
             opacity="0.7"
           />
+          {/* Current time display attached to playhead */}
+          <rect
+            x={playheadX - 18}
+            y="178"
+            width="36"
+            height="16"
+            fill="hsl(var(--accent))"
+            rx="8"
+            opacity="0.9"
+          />
+          <text
+            x={playheadX}
+            y="188"
+            textAnchor="middle"
+            fontSize="10"
+            fill="white"
+            fontFamily="Source Sans Pro, sans-serif"
+            fontWeight="600"
+          >
+            {formatCurrentTime(timelineState.currentPosition)}
+          </text>
+          
           {/* Invisible hit area for easier dragging */}
           <rect
             x={playheadX - 8}
@@ -370,7 +401,7 @@ export function InteractiveTimeline({
         </g>
       </svg>
       
-      <div className="absolute bottom-3 left-0 right-0 flex justify-between px-3 font-sans-custom text-xs text-stone-600 opacity-70 bg-gradient-to-t from-amber-50/80 to-transparent pt-2">
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-3 font-sans-custom text-xs text-stone-600 opacity-70 h-6 items-center bg-gradient-to-t from-amber-50/90 to-transparent">
         <span>3:25</span>
         <span>4:17</span>
       </div>
