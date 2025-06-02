@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap');
+
+:root {
+  /* Custom musical theme colors */
+  --parchment: 42 13% 97%; /* #f9f6f0 */
+  --ink: 31 17% 17%; /* #2c2517 */
+  --sepia: 41 30% 70%; /* #d4c7aa */
+  --accent: 342 51% 40%; /* #8b2942 */
+  --light-accent: 338 29% 94%; /* #f0e6e8 */
+  --staff-line: 39 14% 68%; /* #b3ada3 */
+  --ornament-color: 41 30% 70%; /* #d4c7aa */
+  --shadow-subtle: 31 17% 17% / 0.1; /* rgba(44, 37, 23, 0.1) */
+  --shadow-medium: 31 17% 17% / 0.15; /* rgba(44, 37, 23, 0.15) */
+  --glass: 42 13% 97% / 0.95; /* rgba(249, 246, 240, 0.95) */
+
+  /* Override default shadcn colors to match theme */
+  --background: var(--parchment);
+  --foreground: var(--ink);
+  --muted: 41 30% 85%;
+  --muted-foreground: var(--ink);
+  --popover: var(--parchment);
+  --popover-foreground: var(--ink);
+  --card: var(--parchment);
+  --card-foreground: var(--ink);
+  --border: var(--sepia);
+  --input: var(--sepia);
+  --primary: var(--accent);
+  --primary-foreground: var(--parchment);
+  --secondary: var(--light-accent);
+  --secondary-foreground: var(--ink);
+  --accent: var(--light-accent);
+  --accent-foreground: var(--ink);
+  --destructive: 0 84% 60%;
+  --destructive-foreground: var(--parchment);
+  --ring: var(--accent);
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 220 13% 12%;
+  --foreground: 42 13% 95%;
+  --muted: 220 13% 18%;
+  --muted-foreground: 42 13% 65%;
+  --popover: 220 13% 12%;
+  --popover-foreground: 42 13% 95%;
+  --card: 220 13% 12%;
+  --card-foreground: 42 13% 95%;
+  --border: 220 13% 18%;
+  --input: 220 13% 18%;
+  --primary: var(--accent);
+  --primary-foreground: var(--parchment);
+  --secondary: 220 13% 18%;
+  --secondary-foreground: 42 13% 95%;
+  --accent: 220 13% 18%;
+  --accent-foreground: 42 13% 95%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 42 13% 95%;
+  --ring: var(--accent);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-serif antialiased;
+    font-family: 'Lora', serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Typography */
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-sans-custom {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+
+  /* Custom utility classes */
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: hsl(var(--glass));
+  }
+
+  .shadow-subtle {
+    box-shadow: 0 8px 32px hsl(var(--shadow-subtle));
+  }
+
+  .shadow-medium {
+    box-shadow: 0 12px 48px hsl(var(--shadow-medium));
+  }
+
+  /* Staff lines background */
+  .staff-background {
+    position: fixed;
+    height: 100vh;
+    width: 100vw;
+    top: 0;
+    left: 0;
+    z-index: -2;
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  .staff-line {
+    position: absolute;
+    height: 1px;
+    width: 100%;
+    background-color: hsl(var(--staff-line));
+  }
+
+  /* Animation utilities */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .animate-reveal {
+    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-stagger-in {
+    animation: staggerIn 0.4s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes staggerIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* SVG interaction styles */
+  .timeline-svg {
+    cursor: crosshair;
+  }
+
+  .timeline-svg .playhead-group {
+    transition: all 0.2s ease;
+  }
+
+  .timeline-svg .playhead-group:hover {
+    filter: drop-shadow(0 0 8px hsl(var(--accent) / 0.4));
+  }
+
+  .timeline-svg .playhead-hitarea {
+    cursor: grab;
+  }
+
+  .timeline-svg .playhead-hitarea:active {
+    cursor: grabbing;
+  }
+
+  /* Musical ornament styles */
+  .ornament::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, hsl(var(--accent)), transparent);
+    border-radius: 2px;
+  }
+}
