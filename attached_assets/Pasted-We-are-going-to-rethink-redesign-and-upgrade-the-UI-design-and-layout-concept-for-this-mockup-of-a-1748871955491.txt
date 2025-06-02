@@ -1,0 +1,1066 @@
+We are going to rethink, redesign, and upgrade the UI design and layout concept for this mockup of a PhD data music project, to be more beautiful, functional, professional, classy, and matching the overall styling of the page in the end (though priority is on a great style and design, even if it breaks from the page styling - page styling consistency is more important if this is kept simple, which it doesn’t need to be necessarily, depending on what’s best).
+
+I’m providing new album images, pianist names, and exact specifications for an actual real-life use case. I even am including audio snippets to be playable here. However, for now we just need placeholders for those, that can be blank image areas and with placeholder text. I’ll add them later myself.
+
+We will also redesign the way the graph looks, to have the fake “interpretive variance” lines aligned differently. Instead, the thick grey line/bar will be at the bottom (the low or zero kind of range), and all variance will be one-directional going upwards. Those lines should be redesigned for this fake mockup to be more varied, again peaking in their verticality, spread, and shape variance amongst each other AT the climax point, similar to how they are now. But it should look better and more realistic, like it's constructed at least partially from the audio waveforms.
+
+We still want the title area somehow saying that we are looking at the Rachmaninoff Piano Sonata number two, the second movement. We still want that to be shown. And at first there should only be the graph showing the interpretive variance and probably an area should be expanding somehow or being revealed that actually like expands the UI somehow to appear when we drag over an important section, like the section that we are zoomed in on. It should nicely make it clear that we are on like a timeline zoomed in between two areas. Currently we have like some placeholder time stamps saying 3 minutes 25 seconds and 4 minutes 17 seconds for the left and right ends respectively of our total area that we are zoomed into. However, those are just placeholder values and I'll be changing them for the real part of the piece that I end up choosing to be selected into. And maybe we could also design it to show the whole like six and a half minute segment and actually demonstrate what it looks like to zoom in closer to one part of it. That could be good as well, but we don't have to make that. It's up to you to make some design decisions for what seems like it could be a really good improvement and rethinking of this. Um, and we either want this play head like we have now that can be clicked and dragged until it locks in to the specific highlight or climax section on the timeline or maybe some other way to select that part um, like hot drag like when the mouse hovers over it, it has like an on hover effect for just that part that makes it clear you can click on it and then it's selected. That's also possible. And there are like segments like this climax that have maybe like a little bit of a um, like a slight highlighting already that darkens when there's a hover effect. Something like that could also be possible. So there's multiple potential different takes for this. But ultimately there needs to be some method to intuitively select or target that climax moment and um then some UI element should change or expand or be revealed that should you know very nicely show a collection of recordings probably in a scalable section that would only show a certain amount but you know could expand from showing you know three or four recordings up to 10 depending on how many there are but still look beautiful either way and having those be able to be clicked and have a little player that plays that segment and it's a segment I'm envisioning being you know 10 to 20 seconds of music. Maybe even as few as 5 but these are just going to be short audio clips or at the very least they're going to jump to a specific segment of an audio file um to a certain time stamp. But they should just be mini players or not even showing players but just allowing to click on the albums with some sort of play button overlay on hover and then something that makes it clear that one is playing. and selected but maybe it doesn't need it's own little like play controls below it. But anyways a beautiful way to click on these different album covers and pianist names and probably recording years and maybe record labels in order to play that small segment so that a user can compare how that moment sounds with different recordings. So that's the vision. 
+
+
+
+—---------------------
+
+This is the code section with a mockup that we’re working on:
+
+<div class="mockup-container">
+                <div class="mockup-title-header">
+                    <div class="mockup-title-label">Currently Exploring</div>
+                    <div class="mockup-title-composer">Rachmaninoff</div>
+                    <div class="mockup-title-piece">Piano Sonata No. 2</div>
+                    <div class="mockup-title-movement">2nd Movement</div>
+                </div>
+                <div class="mockup-visualizer">
+                    <div class="mockup-placeholder-section" style="height: 68%; position: relative; display: flex; flex-direction: row; align-items: stretch;">
+                        <div class="interpretive-variance-label-container">
+                            <span class="interpretive-variance-label-text">Interpretive Variance</span>
+                        </div>
+                        <div class="graph-content-area">
+                            <div id="explore-moment" style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: var(--accent); font-weight: 600; opacity: 0; transition: opacity 0.3s ease;">Explore this moment</div>
+                            
+                            <!-- Hidden slider for functionality -->
+                            <input type="range" id="timeline-slider" min="0" max="300" value="50" style="position: absolute; opacity: 0; pointer-events: none; width: 100%;">
+                            
+                            <svg width="100%" height="80%" viewBox="0 0 300 100" preserveAspectRatio="none" style="margin-top: 10px; cursor: pointer;" id="timeline-svg">
+                                 <!-- Median recording range - thicker grey line -->
+                                 <path d="M0,30 C50,32 100,28 150,30 C200,32 250,28 300,30" stroke="#888" fill="none" stroke-width="8" opacity="0.5"/>
+                                 <!-- Individual interpretations - thinner with more curve variation -->
+                                 <path d="M0,30 C30,22 80,8 150,5 C180,12 220,28 300,35" stroke="var(--accent)" fill="none" stroke-width="1.5"/>
+                                 <path d="M0,30 C40,38 90,52 150,55 C190,45 240,32 300,25" stroke="#8b6029" fill="none" stroke-width="1.5"/>
+                                 <path d="M0,30 C25,26 70,42 150,45 C200,18 260,15 300,20" stroke="#298b6a" fill="none" stroke-width="1.5"/>
+                                 <!-- Interactive draggable playhead -->
+                                 <line id="playhead" x1="50" y1="0" x2="50" y2="83" stroke="var(--accent)" stroke-width="3" stroke-dasharray="4,4" style="cursor: grab;"/>
+                                 <!-- Invisible wider hit area for easier dragging -->
+                                 <line id="playhead-hitarea" x1="50" y1="0" x2="50" y2="83" stroke="transparent" stroke-width="15" style="cursor: grab;"/>
+                                 <!-- Playhead Label -->
+                                 <text id="playhead-label" x="50" y="77" text-anchor="middle" dominant-baseline="middle">Click ▪ & drag</text>
+                             </svg>
+                            <div class="graph-timestamp bottom-left">3:25</div>
+                            <div class="graph-timestamp bottom-right">4:17</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; height: 27%;">
+                        <div class="mockup-placeholder-section" style="flex: 1;">
+                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.75rem;">
+                                 <span class="color-dot" style="background-color: #888; opacity: 0.6;"></span>
+                                 <span style="color: #666; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500;">MEDIAN RECORDING RANGE</span>
+                             </div>
+                             <ul>
+                                 <li><span class="color-dot" style="background-color: var(--accent);"></span>Arthur Rubinstein (1937)</li>
+                                 <li><span class="color-dot" style="background-color: #8b6029;"></span>Vladimir Horowitz (1957)</li>
+                                 <li><span class="color-dot" style="background-color: #298b6a;"></span>Maria João Pires (1996)</li>
+                             </ul>
+                        </div>
+                        <div id="recordings-section" class="mockup-placeholder-section" style="flex: 2; opacity: 0; transition: opacity 0.4s ease;">
+                             <div style="display: flex; gap: 0.8rem; justify-content: space-between;">
+                                 <!-- Rubinstein -->
+                                 <div style="text-align: center; flex: 1;">
+                                     <img src="album rubinstein.jpg" alt="Album art for Rubinstein" class="album-art-img">
+                                     <div style="font-weight: 600; font-size: 0.8rem; margin-bottom: 2px;">Arthur Rubinstein</div>
+                                     <div style="font-size: 0.7rem; color: #666; margin-bottom: 4px;">1937</div>
+                                     <div style="font-size: 0.7rem; color: var(--accent); cursor: pointer; border: 1px solid var(--sepia); border-radius: 12px; padding: 2px 8px; background: rgba(139, 41, 66, 0.05); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(139, 41, 66, 0.1)'" onmouseout="this.style.background='rgba(139, 41, 66, 0.05)'">Click to listen</div>
+                                 </div>
+                                 <!-- Horowitz -->
+                                 <div style="text-align: center; flex: 1;">
+                                     <img src="album horowitz.webp" alt="Album art for Horowitz" class="album-art-img">
+                                     <div style="font-weight: 600; font-size: 0.8rem; margin-bottom: 2px;">Vladimir Horowitz</div>
+                                     <div style="font-size: 0.7rem; color: #666; margin-bottom: 4px;">1957</div>
+                                     <div style="font-size: 0.7rem; color: var(--accent); cursor: pointer; border: 1px solid var(--sepia); border-radius: 12px; padding: 2px 8px; background: rgba(139, 41, 66, 0.05); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(139, 41, 66, 0.1)'" onmouseout="this.style.background='rgba(139, 41, 66, 0.05)'">Click to listen</div>
+                                 </div>
+                                 <!-- Pires -->
+                                 <div style="text-align: center; flex: 1;">
+                                     <img src="album pires.jpg" alt="Album art for Pires" class="album-art-img">
+                                     <div style="font-weight: 600; font-size: 0.8rem; margin-bottom: 2px;">Maria João Pires</div>
+                                     <div style="font-size: 0.7rem; color: #666; margin-bottom: 4px;">1996</div>
+                                     <div style="font-size: 0.7rem; color: var(--accent); cursor: pointer; border: 1px solid var(--sepia); border-radius: 12px; padding: 2px 8px; background: rgba(139, 41, 66, 0.05); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(139, 41, 66, 0.1)'" onmouseout="this.style.background='rgba(139, 41, 66, 0.05)'">Click to listen</div>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+—-------------------
+
+Use this CSS to start (in it is contained the styling currently for this mockup, though its part of a bigger page and probably lots of styling irrelevant to this particular job) - or better yet, pull out the actually active CSS for this stuff and you can drop the rest:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Austin Heinz - Proposal on Musical Data Exploration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Custom styles inspired by the second snippet */
+        :root {
+            --parchment: #f9f6f0; /* Light background */
+            --ink: #2c2517;      /* Dark text */
+            --sepia: #d4c7aa;    /* Accent lines, borders */
+            --accent: #8b2942;   /* Main accent color (deep red/purple) */
+            --light-accent: #f0e6e8; /* Lighter background for sections */
+            --staff-line: #b3ada3; /* Color for background staff lines */
+            --ornament-color: #d4c7aa; /* Color for the header ornament */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+             scroll-behavior: smooth; /* Add smooth scrolling */
+        }
+
+        body {
+            font-family: 'Lora', serif; /* Serif for body text */
+            color: var(--ink);
+            background-color: var(--parchment);
+            line-height: 1.7; /* Slightly increased line height */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        /* Background Staff Lines */
+        .staff-background {
+            position: fixed;
+            height: 100vh;
+            width: 100vw;
+            top: 0;
+            left: 0;
+            z-index: -2; /* Behind ornament and content */
+            opacity: 0.07; /* Subtle opacity */
+            pointer-events: none;
+        }
+
+        .staff-line {
+            position: absolute;
+            height: 1px;
+            width: 100%;
+            background-color: var(--staff-line);
+        }
+
+        /* Header Styles */
+        header {
+            min-height: 100vh; /* Use min-height for flexibility */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative; /* Needed for absolute positioning of children */
+            overflow: hidden; /* Hide ornament overflow */
+            z-index: 1; /* Ensure header content is above background */
+        }
+
+        /* Header Ornament SVG Styling */
+        #header-ornament {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 70vw; /* Make it large relative to viewport width */
+            height: 70vh; /* Make it large relative to viewport height */
+            max-width: 800px; /* Optional max width */
+            max-height: 800px; /* Optional max height */
+            transform: translate(-50%, -50%); /* Center the ornament */
+            z-index: -1; /* Place behind header text but above staff background */
+            opacity: 0.15; /* Make it semi-transparent */
+            pointer-events: none; /* Prevent interaction */
+            color: var(--ornament-color); /* Use variable for color */
+        }
+
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 3.5rem); /* Responsive font size */
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            max-width: 900px;
+            color: var(--ink);
+            position: relative; /* Ensure text is above ornament */
+            z-index: 1;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 2.5rem); /* Responsive font size */
+            margin: 4rem 0 1.5rem; /* Increased top margin */
+            border-bottom: 1px solid var(--sepia);
+            padding-bottom: 0.5rem;
+            color: var(--ink);
+        }
+
+        h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.5rem, 4vw, 1.8rem); /* Responsive font size */
+            margin: 2rem 0 1rem;
+            color: var(--accent); /* Accent color for H3 */
+        }
+
+        h4 {
+            font-family: 'Playfair Display', serif;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .subtitle {
+            font-family: 'Source Sans Pro', sans-serif; /* Sans-serif for subtitle */
+            font-weight: 300;
+            font-size: clamp(1.1rem, 3vw, 1.5rem); /* Responsive font size */
+            margin-bottom: 2rem;
+            max-width: 700px;
+            color: var(--ink);
+            opacity: 0.9;
+            position: relative; /* Ensure text is above ornament */
+            z-index: 1;
+        }
+
+        /* Waveform Animation (from second snippet) */
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px; /* Adjusted height */
+            padding: 10px 0;
+            margin-bottom: 3rem; /* Space before scroll indicator */
+            position: relative; /* Ensure waveform is above ornament */
+            z-index: 1;
+        }
+
+        .waveform-bar {
+            background-color: var(--accent);
+            width: 4px; /* Slightly thinner */
+            margin: 0 2px;
+            border-radius: 3px;
+            animation: sound 0s -0.8s linear infinite alternate;
+        }
+
+        @keyframes sound {
+            0% { height: 5px; opacity: 0.5; }
+            100% { height: 60px; opacity: 1; } /* Adjusted max height */
+        }
+
+        /* Staggered animation durations */
+        .waveform-bar:nth-child(1) { animation-duration: 0.7s; }
+        .waveform-bar:nth-child(2) { animation-duration: 1.2s; }
+        .waveform-bar:nth-child(3) { animation-duration: 1.5s; }
+        .waveform-bar:nth-child(4) { animation-duration: 0.9s; }
+        .waveform-bar:nth-child(5) { animation-duration: 1.1s; }
+        .waveform-bar:nth-child(6) { animation-duration: 0.8s; }
+        .waveform-bar:nth-child(7) { animation-duration: 1.3s; }
+        .waveform-bar:nth-child(8) { animation-duration: 1.0s; }
+        .waveform-bar:nth-child(9) { animation-duration: 1.4s; }
+        .waveform-bar:nth-child(10) { animation-duration: 0.6s; }
+        .waveform-bar:nth-child(11) { animation-duration: 1.1s; }
+        .waveform-bar:nth-child(12) { animation-duration: 0.9s; }
+
+        /* Scroll Indicator (from second snippet) */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            animation: bounce 2s infinite;
+            opacity: 0.7;
+            color: var(--ink);
+            z-index: 1; /* Ensure indicator is above ornament */
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); } /* Reduced bounce height */
+            60% { transform: translateY(-7px); }
+        }
+
+        /* Main Content Container */
+        .container {
+            max-width: 900px; /* Adjusted max-width */
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative; /* Ensure main content is above fixed background */
+            z-index: 1;
+            background-color: var(--parchment); /* Need background color to obscure staff lines */
+        }
+
+        /* Section Styling & Animation */
+        section {
+            margin: 6rem 0;
+            opacity: 0;
+            transform: translateY(40px); /* Slightly increased initial offset */
+            transition: opacity 0.9s ease-out, transform 0.9s ease-out;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Grid Layout for Cards (from second snippet) */
+        .grid-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjusted minmax */
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        #relevance .grid-section {
+            grid-template-columns: 1fr; /* Ensure cards in this section are full width */
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.07); /* Slightly softer shadow */
+            padding: 1.5rem 2rem; /* Adjusted padding */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #eee; /* Subtle border */
+        }
+
+        .card:hover {
+            /* transform: translateY(-5px); */ /* Removed vertical shift */
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15); /* Enhanced shadow */
+        }
+        .card h3 {
+            margin-top: 0; /* Remove top margin for H3 inside cards */
+        }
+
+        /* Methodology Section Card Layout & Connectors */
+        #methodology .grid-section {
+            grid-template-columns: 1fr; /* Stack cards in a single column */
+            /* Inherits gap: 2rem from general .grid-section style */
+        }
+
+        .card-container {
+            position: relative; /* Anchor for the connector icon */
+        }
+
+        .connector-wrapper {
+            position: absolute;
+            bottom: -1rem; /* (gap is 2rem, so -1rem is middle of gap from card bottom) */
+            left: 50%;
+            transform: translate(-50%, 50%); /* Center horizontally, and shift down by half of icon's height */
+            z-index: 10;
+        }
+
+        .connector-icon {
+            font-size: 1.5rem; /* Size of the Font Awesome icon */
+            color: var(--accent);
+            background-color: var(--parchment);
+            padding: 0.5em; /* Space between FA icon and circle edge */
+            border-radius: 50%;
+            width: 2.5em;  /* Total width of the circle (1.5em icon + 2 * 0.5em padding) */
+            height: 2.5em; /* Total height of the circle */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        /* Timeline Styling (from second snippet) */
+        .timeline {
+            position: relative;
+            margin: 3rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            width: 2px;
+            background-color: var(--sepia);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -1px;
+            z-index: 0; /* Ensure it's behind content */
+        }
+
+        .timeline-item {
+            padding: 1rem 0; /* Vertical padding only */
+            position: relative;
+            width: 50%;
+            margin-bottom: 2rem;
+            z-index: 1; /* Ensure content is above line */
+        }
+        /* Position items left/right */
+        .timeline-item:nth-child(odd) {
+            left: 0;
+            padding-right: 2rem; /* Space from center line */
+        }
+        .timeline-item:nth-child(even) {
+            left: 50%;
+            padding-left: 2rem; /* Space from center line */
+        }
+
+        .timeline-content {
+            padding: 1.5rem;
+            background-color: white;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+        .timeline-content h4 { /* Timeline date style */
+             margin-bottom: 0.5rem;
+        }
+        .timeline-content strong { /* Style for milestone labels */
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Timeline connector arrows */
+        .timeline-item:nth-child(odd) .timeline-content::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: -10px; /* Position arrow pointing right */
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border: 1px solid #eee;
+            border-left: none; /* Hide left border */
+            border-top: none; /* Hide top border */
+            transform: rotate(45deg);
+            z-index: -1; /* Behind content */
+        }
+
+        .timeline-item:nth-child(even) .timeline-content::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: -10px; /* Position arrow pointing left */
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border: 1px solid #eee;
+            border-right: none; /* Hide right border */
+            border-bottom: none; /* Hide bottom border */
+            transform: rotate(45deg);
+            z-index: -1; /* Behind content */
+        }
+
+        .timeline > .card {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Flowchart Styling */
+        .flowchart-container {
+            width: 100%;
+            margin: 2rem 0;
+            text-align: center;
+            overflow-x: auto; /* Allow horizontal scroll if needed */
+        }
+        .flowchart-container svg {
+             max-width: 100%;
+             height: auto;
+        }
+
+        /* Mockup Styling (from second snippet) */
+        .mockup-container {
+            background-color: var(--light-accent);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 3rem 0;
+            border: 1px solid var(--sepia);
+        }
+        .mockup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 0.5rem;
+        }
+
+        /* Styles for the title section within the mockup */
+        .mockup-title-header {
+            text-align: left; /* Changed to left alignment */
+            max-width: 600px; /* Constrain width */
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1.5rem 2rem; /* Add horizontal padding */
+            margin-bottom: 1rem; /* Reduced bottom margin */
+            border-bottom: 1px solid var(--sepia);
+        }
+
+        .mockup-title-label { /* "Currently Exploring" */
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 0.8rem; /* Even smaller */
+            font-weight: 400;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px; /* Tighter spacing */
+            margin-bottom: 0.5rem;
+        }
+
+        .mockup-title-composer {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem; /* Larger */
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0; /* Tight to piece */
+            line-height: 1.1;
+        }
+
+        .mockup-title-piece {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem; /* Main focus */
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.2rem;
+            line-height: 1.05; /* Very tight */
+        }
+
+        .mockup-title-movement {
+            font-family: 'Lora', serif;
+            font-size: 1rem;
+            font-style: italic;
+            color: #555; /* Darker for contrast */
+            margin-top: 0.1rem;
+        }
+        #playhead-label {
+            font-family: 'Lora', serif !important;
+            font-size: 0.4rem !important;  /* Reverted font size */
+            font-weight: 600 !important;   /* Matching target weight */
+            fill: #777 !important;
+            user-select: none;
+            pointer-events: none;
+        }
+        .interpretive-variance-label-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px; /* Width for the vertical text area */
+            padding-right: 4px; /* Space between label and graph content */
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .interpretive-variance-label-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg); /* Makes text read bottom-to-top */
+            white-space: nowrap;
+            font-size: 0.85rem !important; /* Made even bigger */
+            color: #666 !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 400;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+        .graph-content-area {
+            flex-grow: 1;
+            position: relative; /* For absolute positioning of explore-moment and timestamps */
+        }
+        .graph-timestamp {
+            position: absolute;
+            bottom: 2px; /* Moved even lower */
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 0.75rem;
+            color: #666;
+            user-select: none;
+            pointer-events: none;
+        }
+        .graph-timestamp::before {
+            content: '';
+            position: absolute;
+            bottom: 100%; /* Position it right above the text */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 3px; /* Shorter line */
+            background-color: #666; /* Match text color */
+            margin-bottom: 0px; /* Line closer to text */
+        }
+        .graph-timestamp.bottom-left {
+            left: 5px;
+        }
+        .graph-timestamp.bottom-right {
+            right: 5px;
+        }
+        .album-art-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            margin: 0 auto 8px;
+            display: block;
+            object-fit: cover; /* Ensures image covers the area nicely */
+            background-color: #eee; /* Fallback if image fails to load */
+        }
+
+        .mockup-header h3 { margin: 0; }
+        .mockup-visualizer {
+            background-color: white;
+            border-radius: 8px;
+            min-height: 350px; /* Adjusted height */
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 0.5rem 1.5rem; /* Padding inside visualizer - reduced top/bottom */
+            display: flex; /* Use flex for layout */
+            flex-direction: column;
+            gap: 1rem; /* Space between elements */
+            border: 1px solid #ddd;
+        }
+        .mockup-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem; /* Increased space */
+        }
+        .mockup-button {
+            font-family: 'Source Sans Pro', sans-serif;
+            background-color: white;
+            border: 1px solid var(--sepia);
+            border-radius: 20px; /* Pill shape */
+            padding: 0.6rem 1.2rem; /* Adjusted padding */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .mockup-button:hover {
+            background-color: var(--sepia);
+            color: white;
+            border-color: var(--ink);
+        }
+        /* Placeholder styles within mockup */
+        .mockup-placeholder-section {
+             border: 1px dashed var(--sepia);
+             border-radius: 6px;
+             padding: 1rem;
+             background-color: #fcfaf6;
+             flex-grow: 1; /* Allow sections to grow */
+        }
+         .mockup-placeholder-section h5 {
+             font-family: 'Lora', serif;
+             font-weight: bold;
+             color: var(--accent);
+             margin-bottom: 0.5rem;
+             font-size: 0.9rem;
+             text-transform: uppercase;
+             letter-spacing: 0.5px;
+         }
+         .mockup-placeholder-section p, .mockup-placeholder-section li {
+             font-size: 0.9rem;
+             color: #555;
+         }
+         .mockup-placeholder-section ul {
+             list-style: none;
+             padding: 0;
+         }
+          .mockup-placeholder-section li {
+             display: flex;
+             align-items: center;
+             gap: 8px; /* Space between color dot and text */
+             margin-bottom: 4px;
+         }
+         .color-dot {
+             width: 10px;
+             height: 10px;
+             border-radius: 50%;
+             display: inline-block;
+         }
+
+        /* Literature Review Styling (from second snippet) */
+        .lit-review-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            margin-top: 2rem;
+        }
+        .lit-review-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--sepia);
+        }
+        .lit-review-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .lit-review-item h3 { margin-top: 0; }
+        .lit-review-item i { /* Style for citation hints */
+             font-family: 'Source Sans Pro', sans-serif;
+             font-size: 0.9em;
+             color: #666;
+        }
+
+
+        /* Qualifications Styling (from second snippet) */
+        .qualifications-section {
+            background-color: var(--light-accent);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            border: 1px solid var(--sepia);
+        }
+        .qualifications-list, .musical-list {
+            list-style-type: none;
+            padding-left: 0; /* Remove default padding */
+            margin-bottom: 1.2rem; /* Reduced bottom margin for tighter spacing */
+            margin-top: 0.8rem; /* Controlled top margin */
+        }
+        .qualifications-list li, .musical-list li {
+            margin-bottom: 0.9rem; /* Tighter spacing between list items */
+            padding-left: 2rem; /* Increased padding for better alignment */
+            position: relative;
+            line-height: 1.6; /* Slightly tighter line height */
+        }
+        .qualifications-list li::before, .musical-list li::before {
+            content: '♪'; /* Musical note icon */
+            position: absolute;
+            left: 0;
+            top: 0.1em; /* Slight vertical adjustment for better alignment */
+            color: var(--accent);
+            font-size: 1.3em; /* Slightly larger icon */
+            line-height: 1.4; /* Better alignment with text */
+            font-weight: normal;
+        }
+        
+        /* Enhanced spacing for sections with musical lists */
+        .musical-list-section {
+            margin-bottom: 2.5rem; /* Increased section spacing */
+        }
+        
+        .musical-list-section p {
+            margin-bottom: 1rem; /* Reduced spacing before lists for tighter feel */
+        }
+        
+        .musical-list-section .musical-list + p {
+            margin-top: 1.2rem; /* Consistent spacing after lists */
+        }
+        
+        /* Specific spacing improvements for card content with musical lists */
+        .card .musical-list {
+            margin-top: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+        
+        .card p + .musical-list {
+            margin-top: 0.6rem; /* Tighter spacing after paragraph in cards */
+        }
+
+        /* General List Styling */
+        ul, ol {
+            padding-left: 1.5rem; /* Standard indentation */
+            margin-bottom: 1rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Blockquote Styling */
+        blockquote {
+            border-left: 4px solid var(--accent); /* Use accent color */
+            padding-left: 1.5rem;
+            margin: 1.5rem 0 1.5rem 1rem; /* Adjusted margin */
+            font-style: italic;
+            color: #555; /* Slightly darker italic text */
+        }
+
+        /* Footer Styling (from second snippet) */
+        footer {
+            text-align: center;
+            padding: 2.5rem 1rem; /* Adjusted padding */
+            background-color: var(--sepia);
+            margin-top: 6rem;
+            color: var(--ink);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* Audio Control Styles */
+        #audio-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000; /* Ensure it's above everything */
+            cursor: pointer;
+            font-size: 1.8rem; /* Adjust icon size */
+            color: var(--accent);
+            background-color: rgba(249, 246, 240, 0.7); /* Semi-transparent parchment */
+            padding: 8px 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        #audio-control:hover {
+            background-color: rgba(249, 246, 240, 0.9); /* Less transparent on hover */
+        }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+             /* Adjust ornament size on smaller screens */
+            #header-ornament {
+                width: 90vw;
+                height: 60vh;
+            }
+
+            .timeline::before {
+                left: 20px; /* Adjust line position for mobile */
+                margin-left: 0;
+            }
+            .timeline-item {
+                width: 100%;
+                left: 0 !important; /* Force all items to left */
+                padding-left: 3rem; /* Space for icon/arrow */
+                padding-right: 0;
+            }
+            /* Adjust arrow position for all items on mobile */
+            .timeline-item:nth-child(odd) .timeline-content::after,
+            .timeline-item:nth-child(even) .timeline-content::after {
+                left: -10px; /* Point left */
+                right: auto;
+                border-left: 1px solid #eee; /* Add back border */
+                border-bottom: 1px solid #eee;
+                border-right: none;
+                border-top: none;
+            }
+
+            .mockup-header {
+                 flex-direction: column;
+                 align-items: flex-start;
+            }
+            .grid-section {
+                grid-template-columns: 1fr; /* Stack cards on mobile */
+            }
+             #audio-control { font-size: 1.5rem; top: 15px; right: 15px; } /* Adjust icon for smaller screens */
+        }
+
+        @media (max-width: 480px) {
+             #audio-control { font-size: 1.3rem; top: 10px; right: 10px; } /* Further adjust icon */
+        }
+
+/* Publication Venues Highlight Section */
+        .publication-venues-section {
+            background-color: var(--light-accent); /* Using a light accent for highlight */
+            border: 1px solid var(--sepia);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem; /* Space before the main literature review items */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .publication-venues-section h4 {
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--sepia);
+            padding-bottom: 0.5rem;
+            font-family: 'Playfair Display', serif; /* Consistent heading font */
+            font-size: 1.3rem; /* Slightly smaller than H3 */
+        }
+
+        .publication-venues-section p {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .publication-venues-section ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .publication-venues-section li {
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .publication-venues-section li strong {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+            color: var(--ink);
+        }
+/* Expandable Table for Literature Review */
+        .expandable-table {
+            margin: 2rem 0;
+        }
+
+        .expandable-table summary {
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem; /* Reduced size */
+            color: var(--accent);
+            margin-bottom: 0;
+            padding: 0.6rem 1rem; /* Reduced padding */
+            background-color: var(--light-accent);
+            border: 1px solid var(--sepia);
+            border-radius: 6px;
+            list-style-position: inside;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            outline: none;
+        }
+
+        .expandable-table summary:hover {
+            background-color: var(--sepia);
+            color: white;
+        }
+
+        .expandable-table[open] summary {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border-bottom: none;
+        }
+
+        .expandable-table .table-content-wrapper {
+            border: 1px solid var(--sepia);
+            border-top: none;
+            padding: 1rem; /* Reduced padding */
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            background-color: white;
+            overflow-x: auto; /* Allow horizontal scroll on small screens */
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out;
+        }
+
+        .expandable-table[open] .table-content-wrapper {
+            max-height: none; /* Remove height restriction when open */
+            opacity: 1;
+            overflow-x: auto; /* Allow horizontal scroll when open */
+            overflow-y: visible; /* Allow vertical content to show */
+        }
+
+        /* Smooth animation for the details element */
+        .expandable-table details {
+            transition: all 0.3s ease;
+        }
+
+        .literature-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem; /* Significantly reduced font size */
+            line-height: 1.3; /* Tighter line height */
+        }
+
+        .literature-table th, .literature-table td {
+            border: 1px solid var(--sepia);
+            padding: 0.4rem 0.5rem; /* Reduced padding */
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .literature-table th {
+            background-color: #fdfbf6;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+            color: var(--ink);
+            font-size: 0.7rem; /* Even smaller for headers */
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .literature-table caption {
+            caption-side: bottom;
+            text-align: left;
+            margin-top: 1rem; /* Reduced margin */
+            padding: 0.5rem 0; /* Reduced padding */
+            font-size: 0.8rem; /* Slightly larger than table text */
+            color: var(--ink);
+            font-family: 'Source Sans Pro', sans-serif;
+            line-height: 1.4;
+            border-top: 1px solid var(--sepia);
+        }
+
+        .table-footnotes {
+            margin-top: 1rem; /* Reduced margin */
+            font-size: 0.75rem; /* Smaller footnotes */
+            font-family: 'Source Sans Pro', sans-serif;
+            color: var(--ink);
+            line-height: 1.3;
+        }
+        .table-footnotes p {
+            margin-bottom: 0.3rem;
+        }
+
+        /* Color highlights - made more noticeable */
+        .highlight-green {
+            color: #2a5c17; /* Darker green text */
+            font-weight: 600;
+            background-color: #eaf5e6; /* Light green background */
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .highlight-red {
+            color: #8b2942; /* var(--accent) */
+            font-weight: 600;
+            background-color: #fce8ec; /* Light red/pink background */
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .highlight-blue {
+            color: #163768; /* Darker blue text */
+            font-weight: 600;
+            background-color: #e8eef7; /* Light blue background */
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        /* Specific column styling - more compact */
+        .literature-table .col-year,
+        .literature-table .col-recordings {
+            text-align: center;
+            white-space: nowrap;
+            width: 6%; /* Reduced width */
+            font-weight: 600;
+        }
+        .literature-table .col-author {
+            width: 12%; /* Reduced width */
+            min-width: 80px;
+        }
+        .literature-table .col-journal {
+            width: 16%; /* Reduced width */
+            min-width: 100px;
+        }
+        .literature-table .col-type {
+            width: 14%; /* Reduced width */
+            min-width: 90px;
+        }
+        .literature-table .col-subject {
+            width: 30%; /* Increased to accommodate content */
+            min-width: 150px;
+        }
+        .literature-table .col-process {
+            width: 22%; /* Reduced width */
+            min-width: 120px;
+        }
+
+        /* Abbreviations and compact text styling */
+        .abbr {
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 1px dotted var(--sepia);
+        }
+
+        /* Mobile responsiveness for table */
+        @media (max-width: 768px) {
+            .literature-table {
+                font-size: 0.7rem;
+            }
+            .literature-table th, .literature-table td {
+                padding: 0.3rem 0.4rem;
+            }
+            .expandable-table .table-content-wrapper {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
