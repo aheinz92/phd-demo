@@ -37,14 +37,19 @@ export function InteractiveTimeline({
     
     onPositionChange(percentage);
     
-    // Check if in important area (climax section)
-    const isInImportantArea = percentage > 30 && percentage < 70;
-    if (isInImportantArea && !timelineState.hasInteracted) {
+    // Check if in climax area (narrow range where variance peaks)
+    const isInClimaxArea = percentage > 45 && percentage < 55;
+    if (isInClimaxArea && !timelineState.isRecordingsSectionVisible) {
       onInteractionStart();
       setTimelineState(prev => ({
         ...prev,
         hasInteracted: true,
         isRecordingsSectionVisible: true
+      }));
+    } else if (!isInClimaxArea && timelineState.isRecordingsSectionVisible) {
+      setTimelineState(prev => ({
+        ...prev,
+        isRecordingsSectionVisible: false
       }));
     }
   }, [onPositionChange, onInteractionStart, timelineState.hasInteracted]);
@@ -77,16 +82,8 @@ export function InteractiveTimeline({
   const handleSvgClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       updatePlayheadPosition(e.clientX);
-      if (!timelineState.hasInteracted) {
-        onInteractionStart();
-        setTimelineState(prev => ({
-          ...prev,
-          hasInteracted: true,
-          isRecordingsSectionVisible: true
-        }));
-      }
     }
-  }, [updatePlayheadPosition, timelineState.hasInteracted, onInteractionStart]);
+  }, [updatePlayheadPosition]);
 
   // Touch events for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent) => {

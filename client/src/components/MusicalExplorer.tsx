@@ -65,6 +65,13 @@ export function MusicalExplorer() {
     }, 3000);
   };
 
+  const handlePositionUpdate = (position: number) => {
+    setCurrentPosition(position);
+    // Update recordings visibility based on position
+    const isInClimaxArea = position > 45 && position < 55;
+    setRecordingsSectionVisible(isInClimaxArea);
+  };
+
   const formatCurrentTime = (position: number) => {
     const startSeconds = 3 * 60 + 25; // 3:25
     const endSeconds = 4 * 60 + 17; // 4:17
@@ -127,7 +134,7 @@ export function MusicalExplorer() {
 
             {/* Interactive Timeline */}
             <InteractiveTimeline
-              onPositionChange={handlePositionChange}
+              onPositionChange={handlePositionUpdate}
               onInteractionStart={handleInteractionStart}
               className="mb-4"
             />
@@ -143,57 +150,11 @@ export function MusicalExplorer() {
             </div>
           </section>
 
-          {/* Legend and Recordings */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-            {/* Legend */}
-            <div className="lg:col-span-1">
-              <div className="glass-effect border border-amber-200/40 rounded-2xl p-6">
-                <div className="font-sans-custom text-xs uppercase tracking-wider text-stone-600 font-semibold mb-4">
-                  Recording Range
-                </div>
-                
-                {/* Median Indicator */}
-                <div className="flex items-center gap-3 mb-6 p-3 bg-stone-100/50 rounded-lg">
-                  <div className="w-5 h-1 bg-stone-400 opacity-60 rounded-sm"></div>
-                  <span className="font-sans-custom text-sm font-medium text-stone-700">
-                    Median Recording Range
-                  </span>
-                </div>
-
-                {/* Individual Recordings */}
-                <ul className="space-y-3">
-                  {recordings.map((recording, index) => {
-                    const colors = ['#8b2942', '#b8860b', '#2e8b57'];
-                    return (
-                      <li
-                        key={recording.id}
-                        className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-red-950/5 hover:translate-x-1 cursor-pointer"
-                      >
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: colors[index] }}
-                        ></div>
-                        <span className="font-sans-custom text-sm text-stone-700">
-                          {recording.artistName}
-                        </span>
-                        <span className="font-sans-custom text-xs text-stone-500">
-                          ({recording.recordingYear})
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
-
-            {/* Recordings Section */}
-            <div className="lg:col-span-2">
-              <RecordingsSection
-                recordings={recordings}
-                isVisible={recordingsSectionVisible}
-              />
-            </div>
-          </div>
+          {/* Recordings Section - Only visible in climax area */}
+          <RecordingsSection
+            recordings={recordings}
+            isVisible={recordingsSectionVisible}
+          />
         </main>
       </div>
     </div>
