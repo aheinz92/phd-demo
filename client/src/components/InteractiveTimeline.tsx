@@ -129,48 +129,48 @@ export function InteractiveTimeline({
   const playheadX = (timelineState.currentPosition / 100) * 400;
 
   return (
-    <div className={`relative h-80 bg-gradient-to-b from-transparent to-red-950/5 rounded-xl border border-amber-200/30 overflow-hidden ${className}`}>
+    <div className={`relative h-48 bg-gradient-to-b from-transparent to-red-950/5 rounded-xl border border-amber-200/30 overflow-hidden ${className}`}>
       <svg
         ref={svgRef}
         className="w-full h-full timeline-svg"
-        viewBox="0 0 400 200"
+        viewBox="0 0 400 140"
         preserveAspectRatio="none"
         onClick={handleSvgClick}
       >
         {/* Baseline (median recording range) */}
         <path
-          d="M0,160 Q100,158 200,160 T400,160"
+          d="M0,120 Q100,118 200,120 T400,120"
           stroke="#888"
           fill="none"
-          strokeWidth="8"
+          strokeWidth="6"
           opacity="0.6"
         />
         
         {/* Individual interpretation lines extending upward */}
         {/* Rubinstein (red) - dramatic peaks at climax */}
         <path
-          d="M0,160 Q50,140 100,120 Q150,80 200,60 Q250,90 300,130 Q350,145 400,150"
+          d="M0,120 Q50,105 100,90 Q150,60 200,45 Q250,70 300,100 Q350,110 400,115"
           stroke="hsl(var(--accent))"
           fill="none"
-          strokeWidth="2.5"
+          strokeWidth="2"
           opacity="0.8"
         />
         
         {/* Horowitz (gold) - more controlled variation */}
         <path
-          d="M0,160 Q50,150 100,140 Q150,100 200,85 Q250,110 300,135 Q350,150 400,155"
+          d="M0,120 Q50,112 100,105 Q150,75 200,65 Q250,82 300,102 Q350,115 400,118"
           stroke="#b8860b"
           fill="none"
-          strokeWidth="2.5"
+          strokeWidth="2"
           opacity="0.8"
         />
         
         {/* Pires (teal) - subtle, nuanced interpretation */}
         <path
-          d="M0,160 Q50,155 100,145 Q150,115 200,105 Q250,125 300,140 Q350,155 400,158"
+          d="M0,120 Q50,116 100,108 Q150,85 200,80 Q250,92 300,108 Q350,118 400,120"
           stroke="#2e8b57"
           fill="none"
-          strokeWidth="2.5"
+          strokeWidth="2"
           opacity="0.8"
         />
         
@@ -181,34 +181,34 @@ export function InteractiveTimeline({
         >
           <line
             x1={playheadX}
-            y1="10"
+            y1="8"
             x2={playheadX}
-            y2="180"
+            y2="132"
             stroke="hsl(var(--accent))"
-            strokeWidth="3"
-            strokeDasharray="6,3"
+            strokeWidth="2.5"
+            strokeDasharray="4,2"
           />
           <circle
             cx={playheadX}
-            cy="160"
-            r="8"
+            cy="120"
+            r="6"
             fill="hsl(var(--accent))"
             stroke="hsl(var(--parchment))"
             strokeWidth="2"
           />
           <circle
             cx={playheadX}
-            cy="10"
-            r="6"
+            cy="8"
+            r="4"
             fill="hsl(var(--accent))"
             opacity="0.7"
           />
           {/* Invisible hit area for easier dragging */}
           <rect
-            x={playheadX - 10}
+            x={playheadX - 8}
             y="0"
-            width="20"
-            height="200"
+            width="16"
+            height="140"
             fill="transparent"
             className="playhead-hitarea"
             onMouseDown={handleMouseDown}
@@ -217,7 +217,7 @@ export function InteractiveTimeline({
         </g>
       </svg>
       
-      <div className="absolute bottom-2 left-0 right-0 flex justify-between px-4 font-sans-custom text-sm text-stone-600 opacity-70">
+      <div className="absolute bottom-1 left-0 right-0 flex justify-between px-3 font-sans-custom text-xs text-stone-600 opacity-70">
         <span>3:25</span>
         <span>4:17</span>
       </div>

@@ -82,7 +82,7 @@ export function MusicalExplorer() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center p-2 md:p-4">
       {/* Background Staff Lines */}
       <div className="staff-background">
         {staffLines.map((top, index) => (
@@ -94,38 +94,38 @@ export function MusicalExplorer() {
         ))}
       </div>
 
-      {/* Main Container */}
-      <div className="w-full max-w-6xl glass-effect border border-amber-200/60 rounded-3xl shadow-medium overflow-hidden animate-fade-in-up">
-        {/* Header */}
-        <header className="bg-gradient-to-r from-amber-50/90 to-stone-50/90 p-8 md:p-12 text-center border-b-2 border-amber-200 relative ornament">
-          <div className="font-sans-custom text-sm uppercase tracking-[3px] text-red-900 font-semibold mb-4">
+      {/* Main Container - Optimized for narrow columns */}
+      <div className="w-full max-w-3xl glass-effect border border-amber-200/60 rounded-2xl shadow-medium overflow-hidden animate-fade-in-up">
+        {/* Header - More compact */}
+        <header className="bg-gradient-to-r from-amber-50/90 to-stone-50/90 p-4 md:p-6 text-center border-b border-amber-200 relative ornament">
+          <div className="font-sans-custom text-xs uppercase tracking-[2px] text-red-900 font-semibold mb-2">
             Currently Exploring
           </div>
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-stone-800 mb-2">
+          <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-stone-800 mb-1">
             {pieceInfo.composer}
           </h1>
-          <div className="font-display text-xl md:text-2xl lg:text-3xl italic text-red-900 mb-2">
+          <div className="font-display text-lg md:text-xl italic text-red-900 mb-1">
             {pieceInfo.title}
           </div>
-          <div className="font-sans-custom text-base md:text-lg text-stone-700 opacity-80">
+          <div className="font-sans-custom text-sm md:text-base text-stone-700 opacity-80">
             {pieceInfo.movement}
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="p-6 md:p-12">
-          {/* Variance Graph Section */}
-          <section className="glass-effect border border-amber-200/40 rounded-2xl p-6 md:p-8 mb-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-              <h2 className="font-display text-2xl md:text-3xl font-semibold text-stone-800">
+        {/* Main Content - Reduced padding */}
+        <main className="p-4 md:p-6">
+          {/* Variance Graph Section - More compact */}
+          <section className="glass-effect border border-amber-200/40 rounded-xl p-4 md:p-5 mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+              <h2 className="font-display text-lg md:text-xl font-semibold text-stone-800">
                 Interpretive Variance
               </h2>
               <div
-                className={`font-sans-custom text-sm text-red-900 font-medium transition-opacity duration-300 flex items-center gap-2 ${
+                className={`font-sans-custom text-xs text-red-900 font-medium transition-opacity duration-300 flex items-center gap-1.5 ${
                   showExploreHint ? 'opacity-100' : 'opacity-0'
                 }`}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
                 Drag to explore this moment
@@ -136,13 +136,13 @@ export function MusicalExplorer() {
             <InteractiveTimeline
               onPositionChange={handlePositionUpdate}
               onInteractionStart={handleInteractionStart}
-              className="mb-4"
+              className="mb-3"
             />
 
-            {/* Current Time Display */}
+            {/* Current Time Display - Smaller */}
             <div className="text-center">
-              <div className="inline-block bg-red-900 text-amber-50 px-4 py-2 rounded-full font-sans-custom text-sm font-semibold">
-                <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <div className="inline-block bg-red-900 text-amber-50 px-3 py-1.5 rounded-full font-sans-custom text-xs font-semibold">
+                <svg className="w-3 h-3 inline mr-1.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/>
                 </svg>
                 {formatCurrentTime(currentPosition)}
