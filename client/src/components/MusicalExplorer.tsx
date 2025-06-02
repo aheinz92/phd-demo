@@ -29,6 +29,24 @@ const recordings: Recording[] = [
     artistName: "Maria João Pires",
     recordingYear: 1996,
     colorCode: "#2e8b57"
+  },
+  {
+    id: "richter-1971",
+    artistName: "Sviatoslav Richter",
+    recordingYear: 1971,
+    colorCode: "#8b4513"
+  },
+  {
+    id: "pollini-1989",
+    artistName: "Maurizio Pollini",
+    recordingYear: 1989,
+    colorCode: "#4169e1"
+  },
+  {
+    id: "ashkenazy-1982",
+    artistName: "Vladimir Ashkenazy",
+    recordingYear: 1982,
+    colorCode: "#9932cc"
   }
 ];
 

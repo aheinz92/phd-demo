@@ -15,7 +15,10 @@ export function RecordingsSection({ recordings, isVisible, className = "" }: Rec
   const timelineColors = [
     'hsl(var(--accent))', // Rubinstein - red
     '#b8860b',            // Horowitz - gold
-    '#2e8b57'            // Pires - teal
+    '#2e8b57',            // Pires - teal
+    '#8b4513',            // Richter - brown
+    '#4169e1',            // Pollini - blue
+    '#9932cc'             // Ashkenazy - purple
   ];
 
   const handlePlayClick = (recordingId: string) => {
@@ -43,7 +46,7 @@ export function RecordingsSection({ recordings, isVisible, className = "" }: Rec
           </span>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {recordings.map((recording, index) => (
             <div
               key={recording.id}
