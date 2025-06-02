@@ -30,7 +30,7 @@ export function InteractiveTimeline({
   ): string => {
     const numPoints = 60; // More points for smoother curves
     const rawPoints: { x: number; y: number }[] = [];
-    const baseline = 120;
+    const baseline = 170; // Move baseline down to near bottom of new taller view
     const mainClimaxCenter = 50; // Position of main climax (50% of timeline)
     const mainClimaxWidth = 12; // Width of main climax area
     const secondaryClimaxCenter = 80; // Position of secondary climax (80% of timeline)
@@ -227,17 +227,17 @@ export function InteractiveTimeline({
   const playheadX = (timelineState.currentPosition / 100) * 400;
 
   return (
-    <div className={`relative h-48 bg-gradient-to-b from-transparent to-red-950/5 rounded-xl border border-amber-200/30 overflow-hidden ${className}`}>
+    <div className={`relative h-64 bg-gradient-to-b from-transparent to-red-950/5 rounded-xl border border-amber-200/30 overflow-hidden ${className}`}>
       <svg
         ref={svgRef}
         className="w-full h-full timeline-svg"
-        viewBox="0 0 400 140"
+        viewBox="0 0 400 180"
         preserveAspectRatio="none"
         onClick={handleSvgClick}
       >
         {/* Baseline (median recording range) */}
         <path
-          d="M0,120 L400,120"
+          d="M0,170 L400,170"
           stroke="#666"
           fill="none"
           strokeWidth="4"
@@ -302,14 +302,14 @@ export function InteractiveTimeline({
             x1={playheadX}
             y1="8"
             x2={playheadX}
-            y2="132"
+            y2="172"
             stroke="hsl(var(--accent))"
             strokeWidth="2.5"
             strokeDasharray="4,2"
           />
           <circle
             cx={playheadX}
-            cy="120"
+            cy="170"
             r="6"
             fill="hsl(var(--accent))"
             stroke="hsl(var(--parchment))"
@@ -327,7 +327,7 @@ export function InteractiveTimeline({
             x={playheadX - 8}
             y="0"
             width="16"
-            height="140"
+            height="180"
             fill="transparent"
             className="playhead-hitarea"
             onMouseDown={handleMouseDown}
