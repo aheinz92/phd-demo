@@ -30,7 +30,7 @@ export function InteractiveTimeline({
   ): string => {
     const numPoints = 60; // More points for smoother curves
     const rawPoints: { x: number; y: number }[] = [];
-    const baseline = 170; // Move baseline down to near bottom of new taller view
+    const baseline = 165; // Move baseline down to near bottom of new taller view
     const mainClimaxCenter = 50; // Position of main climax (50% of timeline)
     const mainClimaxWidth = 12; // Width of main climax area
     const secondaryClimaxCenter = 80; // Position of secondary climax (80% of timeline)
@@ -69,8 +69,8 @@ export function InteractiveTimeline({
       const musicianVariance = seededRandom(i + 100) * 0.25;
       const finalVariance = (varianceFactor + musicianVariance) * intensity;
       
-      // Calculate y position (upward from baseline)
-      const y = baseline - Math.max(0, finalVariance * 95);
+      // Calculate y position (upward from baseline) - ensure lines touch baseline
+      const y = baseline - Math.max(2, finalVariance * 95);
       
       rawPoints.push({ x, y });
     }
@@ -235,13 +235,47 @@ export function InteractiveTimeline({
         preserveAspectRatio="none"
         onClick={handleSvgClick}
       >
+        {/* Subtle highlighting for climax areas */}
+        <rect
+          x="176"
+          y="0"
+          width="48"
+          height="180"
+          fill="url(#mainClimaxGradient)"
+          opacity="0.15"
+          rx="4"
+        />
+        <rect
+          x="304"
+          y="0"
+          width="32"
+          height="180"
+          fill="url(#secondaryClimaxGradient)"
+          opacity="0.1"
+          rx="4"
+        />
+        
+        {/* Gradient definitions */}
+        <defs>
+          <linearGradient id="mainClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#8b2942" stopOpacity="0.2"/>
+            <stop offset="50%" stopColor="#8b2942" stopOpacity="0.4"/>
+            <stop offset="100%" stopColor="#8b2942" stopOpacity="0.1"/>
+          </linearGradient>
+          <linearGradient id="secondaryClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#b8860b" stopOpacity="0.15"/>
+            <stop offset="50%" stopColor="#b8860b" stopOpacity="0.3"/>
+            <stop offset="100%" stopColor="#b8860b" stopOpacity="0.1"/>
+          </linearGradient>
+        </defs>
+        
         {/* Baseline (median recording range) */}
         <path
-          d="M0,170 L400,170"
+          d="M0,165 L400,165"
           stroke="#666"
           fill="none"
-          strokeWidth="4"
-          opacity="0.6"
+          strokeWidth="3"
+          opacity="0.5"
         />
         
         {/* Dynamically generated variance paths - 6 different interpretations */}
@@ -302,14 +336,14 @@ export function InteractiveTimeline({
             x1={playheadX}
             y1="8"
             x2={playheadX}
-            y2="172"
+            y2="167"
             stroke="hsl(var(--accent))"
             strokeWidth="2.5"
             strokeDasharray="4,2"
           />
           <circle
             cx={playheadX}
-            cy="170"
+            cy="165"
             r="6"
             fill="hsl(var(--accent))"
             stroke="hsl(var(--parchment))"
@@ -336,7 +370,7 @@ export function InteractiveTimeline({
         </g>
       </svg>
       
-      <div className="absolute bottom-1 left-0 right-0 flex justify-between px-3 font-sans-custom text-xs text-stone-600 opacity-70">
+      <div className="absolute bottom-3 left-0 right-0 flex justify-between px-3 font-sans-custom text-xs text-stone-600 opacity-70 bg-gradient-to-t from-amber-50/80 to-transparent pt-2">
         <span>3:25</span>
         <span>4:17</span>
       </div>
