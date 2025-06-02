@@ -1,0 +1,246 @@
+import React, { useRef, useEffect } from 'react';
+
+interface ClimaxPoint {
+  position: number;
+  intensity: number;
+  width: number;
+}
+
+interface VarianceGraphProps {
+  selectedPoint: number | null;
+  hoverPoint: number | null;
+  setHoverPoint: (point: number | null) => void;
+  isDragging: boolean;
+  setIsDragging: (dragging: boolean) => void;
+  climaxPoints: ClimaxPoint[];
+}
+
+export const VarianceGraph: React.FC<VarianceGraphProps> = ({
+  selectedPoint,
+  hoverPoint,
+  setHoverPoint,
+  isDragging,
+  setIsDragging,
+  climaxPoints
+}) => {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const pathsGenerated = useRef(false);
+
+  // Generate variance paths data only once
+  useEffect(() => {
+    if (!svgRef.current || pathsGenerated.current) return;
+
+    const svg = svgRef.current;
+    const width = svg.clientWidth;
+    const height = svg.clientHeight;
+
+    // Create baseline
+    const baseline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    baseline.setAttribute("d", `M0,${height} H${width}`);
+    baseline.setAttribute("stroke", "#888");
+    baseline.setAttribute("stroke-width", "2");
+    baseline.setAttribute("opacity", "0.5");
+    svg.appendChild(baseline);
+    
+    // Generate variance lines (5 different pianists)
+    const colors = ["#8b2942", "#8b6029", "#298b6a", "#29608b", "#5d298b"];
+    const variances = [
+      generateVariancePath(width, height, 0.7, climaxPoints),
+      generateVariancePath(width, height, 0.8, climaxPoints),
+      generateVariancePath(width, height, 0.6, climaxPoints),
+      generateVariancePath(width, height, 0.75, climaxPoints),
+      generateVariancePath(width, height, 0.85, climaxPoints)
+    ];
+    
+    variances.forEach((pathData, i) => {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", pathData);
+      path.setAttribute("stroke", colors[i]);
+      path.setAttribute("stroke-width", "2");
+      path.setAttribute("fill", "none");
+      path.setAttribute("opacity", "0.8");
+      path.setAttribute("class", "variance-path");
+      svg.appendChild(path);
+    });
+    
+    // Add climax points indicators with varying widths
+    climaxPoints.forEach(point => {
+      const x = (width * point.position) / 100;
+      const highlight = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      highlight.setAttribute("x", `${x - (point.width / 2)}%`);
+      highlight.setAttribute("y", "0");
+      highlight.setAttribute("width", `${point.width}%`);
+      highlight.setAttribute("height", `${height}`);
+      highlight.setAttribute("fill", "#8b2942");
+      highlight.setAttribute("opacity", "0.1");
+      highlight.setAttribute("rx", "2");
+      highlight.setAttribute("class", "climax-point");
+      highlight.setAttribute("data-position", point.position.toString());
+      svg.appendChild(highlight);
+    });
+
+    pathsGenerated.current = true;
+  }, [climaxPoints]);
+
+  // Update playhead position only
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    const svg = svgRef.current;
+    const width = svg.clientWidth;
+    const height = svg.clientHeight;
+
+    // Remove existing playhead elements
+    const existingPlayhead = svg.querySelector('.playhead-group');
+    if (existingPlayhead) {
+      existingPlayhead.remove();
+    }
+
+    // Add playhead if there's a selected point
+    if (selectedPoint !== null) {
+      const playheadGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      playheadGroup.setAttribute("class", "playhead-group");
+      
+      const x = (width * selectedPoint) / 100;
+      
+      const playhead = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      playhead.setAttribute("x1", `${x}`);
+      playhead.setAttribute("y1", "0");
+      playhead.setAttribute("x2", `${x}`);
+      playhead.setAttribute("y2", `${height}`);
+      playhead.setAttribute("stroke", "#8b2942");
+      playhead.setAttribute("stroke-width", "2");
+      playhead.setAttribute("stroke-dasharray", "4,4");
+      
+      const playheadHandle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      playheadHandle.setAttribute("cx", `${x}`);
+      playheadHandle.setAttribute("cy", `${height}`);
+      playheadHandle.setAttribute("r", "5");
+      playheadHandle.setAttribute("fill", "#8b2942");
+
+      playheadGroup.appendChild(playhead);
+      playheadGroup.appendChild(playheadHandle);
+      svg.appendChild(playheadGroup);
+    }
+  }, [selectedPoint]);
+  
+  // Mouse interaction handlers
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!svgRef.current) return;
+    
+    const svg = svgRef.current;
+    const rect = svg.getBoundingClientRect();
+    const position = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    
+    if (isDragging && selectedPoint !== null) {
+      // If dragging, update selected point
+      const nearPoint = climaxPoints.find(point => 
+        Math.abs(point.position - position) <= (point.width / 2)
+      );
+      
+      if (nearPoint) {
+        setHoverPoint(nearPoint.position);
+      } else {
+        setHoverPoint(position);
+      }
+    } else {
+      // If just hovering, highlight climax points
+      const nearPoint = climaxPoints.find(point => 
+        Math.abs(point.position - position) <= (point.width / 2)
+      );
+      
+      if (nearPoint) {
+        setHoverPoint(nearPoint.position);
+        document.body.style.cursor = 'pointer';
+      } else {
+        setHoverPoint(null);
+        document.body.style.cursor = 'default';
+      }
+    }
+  };
+  
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+  
+  const handleMouseUp = () => {
+    if (isDragging && hoverPoint !== null) {
+      setIsDragging(false);
+      document.body.style.cursor = 'default';
+    }
+    setIsDragging(false);
+  };
+  
+  const handleMouseLeave = () => {
+    setHoverPoint(null);
+    setIsDragging(false);
+    document.body.style.cursor = 'default';
+  };
+
+  return (
+    <div className="w-full h-52 relative border border-gray-200 bg-white rounded-lg">
+      <svg 
+        ref={svgRef}
+        className="w-full h-full"
+        preserveAspectRatio="none"
+        onMouseMove={handleMouseMove}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+      />
+    </div>
+  );
+};
+
+// Helper function to generate a variance path with random but controlled variations
+function generateVariancePath(
+  width: number, 
+  height: number, 
+  intensity: number, 
+  climaxPoints: ClimaxPoint[]
+): string {
+  const numPoints = 20; // Number of control points
+  const points = [];
+  
+  // Start at baseline
+  points.push(`M0,${height}`);
+  
+  // Generate points with more intense variance near climax points
+  for (let i = 1; i <= numPoints; i++) {
+    const x = (width * i) / numPoints;
+    const xPercent = (i / numPoints) * 100;
+    
+    // Calculate distance to nearest climax point
+    let nearestClimax = climaxPoints.reduce((nearest, point) => {
+      const distance = Math.abs(point.position - xPercent);
+      if (distance < nearest.distance) {
+        return { distance, intensity: point.intensity };
+      }
+      return nearest;
+    }, { distance: 100, intensity: 0 });
+    
+    // Higher variance near climax points, lower elsewhere
+    let varianceFactor;
+    if (nearestClimax.distance < 15) {
+      // Close to climax, high variance
+      varianceFactor = (1 - (nearestClimax.distance / 15)) * nearestClimax.intensity / 100;
+    } else {
+      // Far from climax, lower variance
+      varianceFactor = 0.1 + Math.random() * 0.15;
+    }
+    
+    // Add some randomness to make each path unique
+    const randomVariance = (Math.random() - 0.5) * 0.3;
+    const finalVariance = (varianceFactor + randomVariance) * intensity;
+    
+    // Calculate y position (from baseline up)
+    const y = height - (height * finalVariance);
+    
+    points.push(`L${x},${y}`);
+  }
+  
+  // End at baseline
+  points.push(`L${width},${height}`);
+  
+  return points.join(" ");
+}

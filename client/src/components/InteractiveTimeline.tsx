@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { TimelineState } from '@/types/music';
 
 interface InteractiveTimelineProps {
@@ -21,6 +21,64 @@ export function InteractiveTimeline({
 
   const svgRef = useRef<SVGSVGElement>(null);
   const playheadGroupRef = useRef<SVGGElement>(null);
+
+  // Helper function to generate variance paths with realistic interpretive differences
+  const generateVariancePath = useCallback((
+    width: number, 
+    intensity: number, 
+    seed: number // For consistent randomness
+  ): string => {
+    const numPoints = 30;
+    const points = [];
+    const baseline = 120;
+    const climaxCenter = 50; // Position of climax (50% of timeline)
+    const climaxWidth = 15; // Width of climax area
+    
+    // Use seed for consistent "randomness"
+    const seededRandom = (index: number) => {
+      const x = Math.sin(seed * 9999 + index * 1234) * 10000;
+      return x - Math.floor(x);
+    };
+    
+    points.push(`M0,${baseline}`);
+    
+    for (let i = 1; i <= numPoints; i++) {
+      const x = (width * i) / numPoints;
+      const xPercent = (i / numPoints) * 100;
+      
+      // Distance from climax center
+      const distanceFromClimax = Math.abs(xPercent - climaxCenter);
+      
+      // Base variance - higher near climax
+      let varianceFactor;
+      if (distanceFromClimax < climaxWidth) {
+        // In climax area - dramatic variance
+        const climaxIntensity = 1 - (distanceFromClimax / climaxWidth);
+        varianceFactor = climaxIntensity * 0.8;
+      } else {
+        // Outside climax - subtle variance
+        varianceFactor = 0.1 + (seededRandom(i) * 0.15);
+      }
+      
+      // Add musician-specific character
+      const musicianVariance = seededRandom(i + 100) * 0.3;
+      const finalVariance = (varianceFactor + musicianVariance) * intensity;
+      
+      // Calculate y position (upward from baseline)
+      const y = baseline - Math.max(0, finalVariance * 80);
+      
+      points.push(`L${x},${y}`);
+    }
+    
+    return points.join(" ");
+  }, []);
+
+  // Generate stable variance paths
+  const variancePaths = useMemo(() => ({
+    rubinstein: generateVariancePath(400, 0.9, 1.2), // Most dramatic
+    horowitz: generateVariancePath(400, 0.7, 2.8),   // Controlled
+    pires: generateVariancePath(400, 0.5, 4.1)       // Subtle
+  }), [generateVariancePath]);
 
   const updatePlayheadPosition = useCallback((clientX: number) => {
     if (!svgRef.current) return;
@@ -139,39 +197,36 @@ export function InteractiveTimeline({
       >
         {/* Baseline (median recording range) */}
         <path
-          d="M0,120 Q100,118 200,120 T400,120"
+          d="M0,120 L400,120"
           stroke="#888"
           fill="none"
-          strokeWidth="6"
-          opacity="0.6"
+          strokeWidth="3"
+          opacity="0.5"
         />
         
-        {/* Individual interpretation lines extending upward */}
-        {/* Rubinstein (red) - dramatic peaks at climax */}
+        {/* Dynamically generated variance paths */}
         <path
-          d="M0,120 Q50,105 100,90 Q150,60 200,45 Q250,70 300,100 Q350,110 400,115"
+          d={variancePaths.rubinstein}
           stroke="hsl(var(--accent))"
           fill="none"
-          strokeWidth="2"
-          opacity="0.8"
+          strokeWidth="2.5"
+          opacity="0.85"
         />
         
-        {/* Horowitz (gold) - more controlled variation */}
         <path
-          d="M0,120 Q50,112 100,105 Q150,75 200,65 Q250,82 300,102 Q350,115 400,118"
+          d={variancePaths.horowitz}
           stroke="#b8860b"
           fill="none"
-          strokeWidth="2"
-          opacity="0.8"
+          strokeWidth="2.5"
+          opacity="0.85"
         />
         
-        {/* Pires (teal) - subtle, nuanced interpretation */}
         <path
-          d="M0,120 Q50,116 100,108 Q150,85 200,80 Q250,92 300,108 Q350,118 400,120"
+          d={variancePaths.pires}
           stroke="#2e8b57"
           fill="none"
-          strokeWidth="2"
-          opacity="0.8"
+          strokeWidth="2.5"
+          opacity="0.85"
         />
         
         {/* Interactive Playhead */}
