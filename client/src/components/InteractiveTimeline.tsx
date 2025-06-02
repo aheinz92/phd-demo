@@ -22,14 +22,14 @@ export function InteractiveTimeline({
   const svgRef = useRef<SVGSVGElement>(null);
   const playheadGroupRef = useRef<SVGGElement>(null);
 
-  // Helper function to generate variance paths with realistic interpretive differences
+  // Helper function to generate smooth variance paths with realistic interpretive differences
   const generateVariancePath = useCallback((
     width: number, 
     intensity: number, 
     seed: number // For consistent randomness
   ): string => {
-    const numPoints = 40;
-    const points = [];
+    const numPoints = 60; // More points for smoother curves
+    const rawPoints: { x: number; y: number }[] = [];
     const baseline = 120;
     const mainClimaxCenter = 50; // Position of main climax (50% of timeline)
     const mainClimaxWidth = 12; // Width of main climax area
@@ -42,9 +42,8 @@ export function InteractiveTimeline({
       return x - Math.floor(x);
     };
     
-    points.push(`M0,${baseline}`);
-    
-    for (let i = 1; i <= numPoints; i++) {
+    // Generate raw points first
+    for (let i = 0; i <= numPoints; i++) {
       const x = (width * i) / numPoints;
       const xPercent = (i / numPoints) * 100;
       
@@ -57,7 +56,7 @@ export function InteractiveTimeline({
       // Main climax influence (stronger)
       if (distanceFromMainClimax < mainClimaxWidth) {
         const mainClimaxIntensity = 1 - (distanceFromMainClimax / mainClimaxWidth);
-        varianceFactor += mainClimaxIntensity * 1.2; // Increased intensity for taller peaks
+        varianceFactor += mainClimaxIntensity * 1.2;
       }
       
       // Secondary climax influence (moderate)
@@ -70,13 +69,42 @@ export function InteractiveTimeline({
       const musicianVariance = seededRandom(i + 100) * 0.25;
       const finalVariance = (varianceFactor + musicianVariance) * intensity;
       
-      // Calculate y position (upward from baseline) - increased range
+      // Calculate y position (upward from baseline)
       const y = baseline - Math.max(0, finalVariance * 95);
       
-      points.push(`L${x},${y}`);
+      rawPoints.push({ x, y });
     }
     
-    return points.join(" ");
+    // Apply simple smoothing
+    const smoothedPoints = rawPoints.map((point, i) => {
+      if (i === 0 || i === rawPoints.length - 1) return point;
+      
+      const prev = rawPoints[i - 1];
+      const next = rawPoints[i + 1];
+      
+      return {
+        x: point.x,
+        y: (prev.y + point.y + next.y) / 3 // Simple 3-point average
+      };
+    });
+    
+    // Create smooth curve using quadratic curves
+    const pathParts = [`M${smoothedPoints[0].x},${smoothedPoints[0].y}`];
+    
+    for (let i = 1; i < smoothedPoints.length - 1; i++) {
+      const current = smoothedPoints[i];
+      const next = smoothedPoints[i + 1];
+      const midX = (current.x + next.x) / 2;
+      const midY = (current.y + next.y) / 2;
+      
+      pathParts.push(`Q${current.x},${current.y} ${midX},${midY}`);
+    }
+    
+    // Final point
+    const lastPoint = smoothedPoints[smoothedPoints.length - 1];
+    pathParts.push(`L${lastPoint.x},${lastPoint.y}`);
+    
+    return pathParts.join(" ");
   }, []);
 
   // Generate stable variance paths with more performers
@@ -219,50 +247,50 @@ export function InteractiveTimeline({
         {/* Dynamically generated variance paths - 6 different interpretations */}
         <path
           d={variancePaths.rubinstein}
-          stroke="hsl(var(--accent))"
+          stroke="#d63384"
           fill="none"
-          strokeWidth="2.5"
-          opacity="0.9"
+          strokeWidth="1.5"
+          opacity="0.75"
         />
         
         <path
           d={variancePaths.horowitz}
           stroke="#b8860b"
           fill="none"
-          strokeWidth="2.5"
-          opacity="0.9"
+          strokeWidth="1.5"
+          opacity="0.75"
         />
         
         <path
           d={variancePaths.pires}
           stroke="#2e8b57"
           fill="none"
-          strokeWidth="2.5"
-          opacity="0.9"
+          strokeWidth="1.5"
+          opacity="0.75"
         />
         
         <path
           d={variancePaths.richter}
           stroke="#8b4513"
           fill="none"
-          strokeWidth="2.5"
-          opacity="0.9"
+          strokeWidth="1.5"
+          opacity="0.75"
         />
         
         <path
           d={variancePaths.pollini}
           stroke="#4169e1"
           fill="none"
-          strokeWidth="2.5"
-          opacity="0.9"
+          strokeWidth="1.5"
+          opacity="0.75"
         />
         
         <path
           d={variancePaths.ashkenazy}
           stroke="#9932cc"
           fill="none"
-          strokeWidth="2.5"
-          opacity="0.9"
+          strokeWidth="1.5"
+          opacity="0.75"
         />
         
         {/* Interactive Playhead */}

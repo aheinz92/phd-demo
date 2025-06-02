@@ -16,7 +16,7 @@ const recordings: Recording[] = [
     id: "rubinstein-1937",
     artistName: "Arthur Rubinstein",
     recordingYear: 1937,
-    colorCode: "#8b2942"
+    colorCode: "#d63384"
   },
   {
     id: "horowitz-1957",

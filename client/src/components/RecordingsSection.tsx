@@ -13,7 +13,7 @@ export function RecordingsSection({ recordings, isVisible, className = "" }: Rec
 
   // Color mapping that matches the timeline lines
   const timelineColors = [
-    'hsl(var(--accent))', // Rubinstein - red
+    '#d63384',            // Rubinstein - bright pink/red
     '#b8860b',            // Horowitz - gold
     '#2e8b57',            // Pires - teal
     '#8b4513',            // Richter - brown
