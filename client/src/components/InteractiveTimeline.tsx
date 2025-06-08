@@ -1,31 +1,57 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useLocation } from "wouter";
 import { TimelineState } from '@/types/music';
+// import { sectionAClips, sectionBClips } from '@/data/recordingClips'; // No longer needed here
+// import { MusicalExplorer } from './MusicalExplorer'; // No longer needed here
+import './InteractiveTimeline.css'; // Import the new CSS file
 
 interface InteractiveTimelineProps {
   onPositionChange: (position: number) => void;
   onInteractionStart: () => void;
+  activeGraphLineId?: string | null; // Added to receive hovered line ID
   className?: string;
+  titleText?: string; // New prop for the title
 }
 
-export function InteractiveTimeline({ 
-  onPositionChange, 
-  onInteractionStart, 
-  className = "" 
+export function InteractiveTimeline({
+  onPositionChange,
+  onInteractionStart,
+  activeGraphLineId = null, // Default to null
+  className = "",
+  titleText // Destructure the new prop
 }: InteractiveTimelineProps) {
-  const [timelineState, setTimelineState] = useState<TimelineState>({
+  const [, setLocation] = useLocation(); // Added for navigation
+  const [timelineState, setTimelineState] = useState<Omit<TimelineState, 'isRecordingsSectionVisible'> & { hasInteracted: boolean }>({
     currentPosition: 30,
     isDragging: false,
     hasInteracted: false,
-    isRecordingsSectionVisible: false
+    // isRecordingsSectionVisible is removed from here and managed by route
   });
+  const timelineStateRef = useRef(timelineState);
+  useEffect(() => {
+    timelineStateRef.current = timelineState;
+  }, [timelineState]);
+
+  // activeSectionKey is still used to determine which section to navigate to
+  const [activeSectionKey, setActiveSectionKey] = useState<string | null>(null);
+  // const [isExplorerVisible, setIsExplorerVisible] = useState<boolean>(false); // No longer needed, route controls visibility
 
   const svgRef = useRef<SVGSVGElement>(null);
   const playheadGroupRef = useRef<SVGGElement>(null);
+  const [effectiveViewBoxWidth, setEffectiveViewBoxWidth] = useState(400);
+
+  // Define ViewBox constants
+  const VIEWBOX_MIN_Y = 20; // Align with top playhead marker
+  const VIEWBOX_HEIGHT = 172; // Prev height 184 - (20 - 8) = 172. Keeps bottom edge at 192.
+
+  // Define climax areas (percentages)
+  const MAIN_CLIMAX_AREA = useMemo(() => ({ start: 44, end: 56, center: 50 }), []);
+  const SECONDARY_CLIMAX_AREA = useMemo(() => ({ start: 76, end: 84, center: 80 }), []);
 
   // Helper function to generate smooth variance paths with realistic interpretive differences
   const generateVariancePath = useCallback((
-    width: number, 
-    intensity: number, 
+    width: number,
+    intensity: number,
     seed: number // For consistent randomness
   ): string => {
     const numPoints = 60; // More points for smoother curves
@@ -44,8 +70,9 @@ export function InteractiveTimeline({
     
     // Generate raw points first
     for (let i = 0; i <= numPoints; i++) {
-      const x = (width * i) / numPoints;
-      const xPercent = (i / numPoints) * 100;
+      const x_original = (width * i) / numPoints;
+      const x = width - x_original; // Flipped x-coordinate
+      const xPercent = (i / numPoints) * 100; // xPercent remains logical for climax calculation
       
       // Calculate distance from both climax points
       const distanceFromMainClimax = Math.abs(xPercent - mainClimaxCenter);
@@ -109,54 +136,123 @@ export function InteractiveTimeline({
 
   // Generate stable variance paths with more performers
   const variancePaths = useMemo(() => ({
-    rubinstein: generateVariancePath(400, 1.0, 1.2),   // Most dramatic peaks
-    horowitz: generateVariancePath(400, 0.85, 2.8),    // Strong controlled peaks
-    pires: generateVariancePath(400, 0.6, 4.1),        // Moderate subtle peaks
-    richter: generateVariancePath(400, 0.75, 6.7),     // Unique interpretation
-    pollini: generateVariancePath(400, 0.8, 8.3),      // Technical precision
-    ashkenazy: generateVariancePath(400, 0.65, 9.9)    // Lyrical approach
-  }), [generateVariancePath]);
+    rubinstein: generateVariancePath(effectiveViewBoxWidth, 1.0, 1.2),
+    horowitz: generateVariancePath(effectiveViewBoxWidth, 0.85, 2.8),
+    pires: generateVariancePath(effectiveViewBoxWidth, 0.6, 4.1),
+    richter: generateVariancePath(effectiveViewBoxWidth, 0.75, 6.7),
+    pollini: generateVariancePath(effectiveViewBoxWidth, 0.8, 8.3),
+    ashkenazy: generateVariancePath(effectiveViewBoxWidth, 0.65, 9.9)
+  }), [generateVariancePath, effectiveViewBoxWidth]);
 
   const updatePlayheadPosition = useCallback((clientX: number) => {
     if (!svgRef.current) return;
-    
     const rect = svgRef.current.getBoundingClientRect();
-    const svgX = ((clientX - rect.left) / rect.width) * 400;
-    const clampedX = Math.max(10, Math.min(390, svgX));
-    const percentage = (clampedX / 400) * 100;
+
+    // Determine the effective viewBox width to make content fill the SVG area
+    const svgElementWidth = rect.width;
+    const svgElementHeight = rect.height;
+    let newViewBoxWidth = 400; // Default
+    if (svgElementHeight > 0) { // Avoid division by zero
+        // Maintain a viewBox height of VIEWBOX_HEIGHT, adjust width based on element aspect ratio
+        newViewBoxWidth = (svgElementWidth / svgElementHeight) * VIEWBOX_HEIGHT;
+    }
+    if (newViewBoxWidth !== effectiveViewBoxWidth) {
+      setEffectiveViewBoxWidth(newViewBoxWidth);
+    }
+
+    const viewBoxMeta = { width: newViewBoxWidth, height: VIEWBOX_HEIGHT };
+    const rectAspectRatio = rect.width / rect.height;
+    const viewBoxAspectRatio = viewBoxMeta.width / viewBoxMeta.height;
+
+    let visualContentWidth: number;
+    let visualPaddingLeft: number;
+
+    if (rect.width === 0 || rect.height === 0) {
+      // Avoid division by zero or incorrect calculations if SVG isn't rendered yet
+      return;
+    }
+
+    if (rectAspectRatio > viewBoxAspectRatio) {
+      const scale = rect.height / viewBoxMeta.height;
+      visualContentWidth = viewBoxMeta.width * scale;
+      visualPaddingLeft = (rect.width - visualContentWidth) / 2;
+    } else { // Covers letterboxed and matching aspect ratios
+      visualContentWidth = rect.width;
+      visualPaddingLeft = 0;
+    }
+
+    const mouseXRelativeToVisualSvg = clientX - rect.left - visualPaddingLeft;
+    // currentSvgX is now in the coordinate system of the newViewBoxWidth
+    const currentSvgX = visualContentWidth > 0 ? ((visualContentWidth - mouseXRelativeToVisualSvg) / visualContentWidth) * newViewBoxWidth : 0;
     
+    // Clamp based on 2.5% padding on each side of the newViewBoxWidth
+    const padding = newViewBoxWidth * 0.025;
+    const clampedX = Math.max(padding, Math.min(newViewBoxWidth - padding, currentSvgX));
+    const percentage = newViewBoxWidth > 0 ? (clampedX / newViewBoxWidth) * 100 : 0;
+    
+    // Update currentPosition first
     setTimelineState(prev => ({
       ...prev,
-      currentPosition: percentage
+      currentPosition: percentage,
     }));
-    
     onPositionChange(percentage);
-    
-    // Check if in climax areas (main climax at 50% and secondary at 80%)
-    const isInMainClimaxArea = percentage > 44 && percentage < 56;
-    const isInSecondaryClimaxArea = percentage > 76 && percentage < 84;
+
+    // Then, based on the new position, update activeSectionKey and navigate
+    const isInMainClimaxArea = percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end;
+    const isInSecondaryClimaxArea = percentage > SECONDARY_CLIMAX_AREA.start && percentage < SECONDARY_CLIMAX_AREA.end;
     const isInAnyClimaxArea = isInMainClimaxArea || isInSecondaryClimaxArea;
-    
-    if (isInAnyClimaxArea && !timelineState.isRecordingsSectionVisible) {
+
+    let newHasInteracted = timelineStateRef.current.hasInteracted;
+    let shouldCallOnInteractionStart = false;
+
+    let newActiveSectionKey: string | null = null;
+    if (isInMainClimaxArea) {
+      newActiveSectionKey = 'A';
+    } else if (isInSecondaryClimaxArea) {
+      newActiveSectionKey = 'B';
+    }
+
+    if (newActiveSectionKey) {
+      // Check if interaction start needs to be called
+      // This logic assumes that navigating to an explorer path means it "becomes visible"
+      // and navigating away means it "becomes hidden".
+      // We need to know the *previous* route or if we were previously on a non-explorer route.
+      // For simplicity, we'll assume if we are setting a newActiveSectionKey, and it's the first interaction,
+      // then onInteractionStart should be called.
+      // A more robust solution might involve checking the current location path.
+      if (!newHasInteracted) {
+        shouldCallOnInteractionStart = true;
+      }
+      newHasInteracted = true;
+
+      if (activeSectionKey !== newActiveSectionKey) { // Only navigate if section changes or becomes active
+        setActiveSectionKey(newActiveSectionKey);
+        setLocation(`/explorer/${newActiveSectionKey}`);
+      }
+    } else { // Not in any climax area
+      if (activeSectionKey !== null) { // Only navigate if a section was active
+        setActiveSectionKey(null);
+        setLocation('/'); // Navigate to base path
+      }
+    }
+
+    if (shouldCallOnInteractionStart) {
       onInteractionStart();
+    }
+
+    if (newHasInteracted !== timelineStateRef.current.hasInteracted) {
       setTimelineState(prev => ({
         ...prev,
-        hasInteracted: true,
-        isRecordingsSectionVisible: true
-      }));
-    } else if (!isInAnyClimaxArea && timelineState.isRecordingsSectionVisible) {
-      setTimelineState(prev => ({
-        ...prev,
-        isRecordingsSectionVisible: false
+        hasInteracted: newHasInteracted,
       }));
     }
-  }, [onPositionChange, onInteractionStart, timelineState.hasInteracted]);
+  }, [onPositionChange, onInteractionStart, effectiveViewBoxWidth, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA, setLocation, activeSectionKey]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setTimelineState(prev => ({ ...prev, isDragging: true }));
     if (playheadGroupRef.current) {
-      playheadGroupRef.current.style.transform = 'scale(1.1)';
+      // playheadGroupRef.current.style.transform = 'scale(1.1)'; // Removed to prevent floating effect
     }
     updatePlayheadPosition(e.clientX);
   }, [updatePlayheadPosition]);
@@ -166,124 +262,238 @@ export function InteractiveTimeline({
       e.preventDefault();
       updatePlayheadPosition(e.clientX);
     }
-  }, [timelineState.isDragging, updatePlayheadPosition]);
+  }, [updatePlayheadPosition]); // timelineState.isDragging is accessed via timelineStateRef in the effect
 
-  const handleMouseUp = useCallback(() => {
-    if (timelineState.isDragging) {
+  const handleInteractionEnd = useCallback(() => {
+    const currentTimelineState = timelineStateRef.current;
+    if (!currentTimelineState.isDragging) return;
+
+    const { currentPosition: droppedPosition, hasInteracted: prevHasInteracted } = currentTimelineState;
+
+    let snapToPercentage: number | null = null;
+    let newSnappedSectionKey: string | null = null;
+
+    if (droppedPosition > MAIN_CLIMAX_AREA.start && droppedPosition < MAIN_CLIMAX_AREA.end) {
+      snapToPercentage = MAIN_CLIMAX_AREA.center;
+      newSnappedSectionKey = 'A';
+    } else if (droppedPosition > SECONDARY_CLIMAX_AREA.start && droppedPosition < SECONDARY_CLIMAX_AREA.end) {
+      snapToPercentage = SECONDARY_CLIMAX_AREA.center;
+      newSnappedSectionKey = 'B';
+    }
+
+    let finalHasInteracted = prevHasInteracted;
+    let shouldCallOnInteractionStart = false;
+
+    if (snapToPercentage !== null && newSnappedSectionKey) {
+      const finalPosition = snapToPercentage;
+
+      // If we are snapping to a section, it implies interaction.
+      // Call onInteractionStart if this is the first such interaction.
+      // This logic assumes that navigating to an explorer path means it "becomes visible".
+      if (!prevHasInteracted) {
+        shouldCallOnInteractionStart = true;
+      }
+      finalHasInteracted = true;
+      
+      if (shouldCallOnInteractionStart) {
+        onInteractionStart();
+      }
+
+      setTimelineState(prev => ({
+        ...prev,
+        isDragging: false,
+        currentPosition: finalPosition,
+        hasInteracted: finalHasInteracted,
+      }));
+      onPositionChange(finalPosition);
+      
+      if (activeSectionKey !== newSnappedSectionKey) {
+        setActiveSectionKey(newSnappedSectionKey);
+        setLocation(`/explorer/${newSnappedSectionKey}`);
+      }
+
+    } else { // Dropped outside any climax area
       setTimelineState(prev => ({ ...prev, isDragging: false }));
-      if (playheadGroupRef.current) {
-        playheadGroupRef.current.style.transform = 'scale(1)';
+      // onPositionChange for the droppedPosition was already called by updatePlayheadPosition
+      if (activeSectionKey !== null) { // Only navigate if a section was active
+        setActiveSectionKey(null);
+        setLocation('/'); // Navigate to base path
       }
     }
-  }, [timelineState.isDragging]);
+  }, [onPositionChange, onInteractionStart, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA, setLocation, activeSectionKey]);
 
-  const handleSvgClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      updatePlayheadPosition(e.clientX);
-    }
-  }, [updatePlayheadPosition]);
+
+  const handleMouseUp = useCallback(() => {
+    handleInteractionEnd();
+  }, [handleInteractionEnd]);
 
   // Touch events for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     setTimelineState(prev => ({ ...prev, isDragging: true }));
     if (playheadGroupRef.current) {
-      playheadGroupRef.current.style.transform = 'scale(1.1)';
+      // playheadGroupRef.current.style.transform = 'scale(1.1)'; // Removed to prevent floating effect
     }
     updatePlayheadPosition(e.touches[0].clientX);
   }, [updatePlayheadPosition]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (timelineState.isDragging && e.touches.length > 0) {
+    // Access isDragging via ref for stability if this callback is memoized with fewer deps
+    if (timelineStateRef.current.isDragging && e.touches.length > 0) {
       e.preventDefault();
       updatePlayheadPosition(e.touches[0].clientX);
     }
-  }, [timelineState.isDragging, updatePlayheadPosition]);
+  }, [updatePlayheadPosition]);
 
   const handleTouchEnd = useCallback(() => {
-    if (timelineState.isDragging) {
-      setTimelineState(prev => ({ ...prev, isDragging: false }));
-      if (playheadGroupRef.current) {
-        playheadGroupRef.current.style.transform = 'scale(1)';
-      }
+    handleInteractionEnd();
+  }, [handleInteractionEnd]);
+
+  const handleSvgMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setTimelineState(prev => ({ ...prev, isDragging: true }));
+    updatePlayheadPosition(e.clientX);
+  }, [updatePlayheadPosition]);
+
+  const handleSvgTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    setTimelineState(prev => ({ ...prev, isDragging: true }));
+    if (e.touches.length > 0) {
+      updatePlayheadPosition(e.touches[0].clientX);
     }
-  }, [timelineState.isDragging]);
+  }, [updatePlayheadPosition]);
 
   // Set up global event listeners
   useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
+    // Initial calculation of effectiveViewBoxWidth on mount
+    if (svgRef.current) {
+      const rect = svgRef.current.getBoundingClientRect();
+      const svgElementWidth = rect.width;
+      const svgElementHeight = rect.height;
+      if (svgElementHeight > 0) {
+        const newInitialWidth = (svgElementWidth / svgElementHeight) * VIEWBOX_HEIGHT;
+        setEffectiveViewBoxWidth(newInitialWidth);
+      }
+    }
+
+    const stableHandleMouseMove = (e: MouseEvent) => {
+      if (timelineStateRef.current.isDragging) {
+        handleMouseMove(e);
+      }
+    };
+    const stableHandleTouchMove = (e: TouchEvent) => {
+      if (timelineStateRef.current.isDragging && e.touches.length > 0) {
+        handleTouchMove(e);
+      }
+    };
+
+    document.addEventListener('mousemove', stableHandleMouseMove, { passive: false });
     document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchmove', stableHandleTouchMove, { passive: false }); // passive: false if preventDefault is used
     document.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousemove', stableHandleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchmove', stableHandleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+  }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd, VIEWBOX_HEIGHT]); // Added VIEWBOX_HEIGHT dependency
 
-  const playheadX = (timelineState.currentPosition / 100) * 400;
+  // This useEffect is no longer needed as clipsForExplorer is derived directly in render
+  // and visibility is handled by isExplorerVisible state.
+  // useEffect(() => {
+  //   const { currentPosition } = timelineStateRef.current; // Use ref to avoid dependency on timelineState object
+  //   const isInMainClimaxArea = currentPosition > MAIN_CLIMAX_AREA.start && currentPosition < MAIN_CLIMAX_AREA.end;
+  //   const isInSecondaryClimaxArea = currentPosition > SECONDARY_CLIMAX_AREA.start && currentPosition < SECONDARY_CLIMAX_AREA.end;
+  //
+  //   if (isExplorerVisible) {
+  //     if (activeSectionKey === 'A' && isInMainClimaxArea) {
+  //       // clipsForExplorer will be set in render
+  //     } else if (activeSectionKey === 'B' && isInSecondaryClimaxArea) {
+  //       // clipsForExplorer will be set in render
+  //     } else {
+  //       // This condition might indicate a mismatch or a transition state.
+  //       // For safety, if visible but no valid active section, perhaps hide or clear clips.
+  //       // However, the primary logic in event handlers should prevent this.
+  //     }
+  //   } else {
+  //     // clipsForExplorer will be null in render
+  //   }
+  // }, [isExplorerVisible, activeSectionKey, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
+  
+  const playheadX = effectiveViewBoxWidth - (timelineState.currentPosition / 100) * effectiveViewBoxWidth; // Flipped playheadX
 
   const formatCurrentTime = (position: number) => {
-    const startSeconds = 3 * 60 + 25; // 3:25
-    const endSeconds = 4 * 60 + 17; // 4:17
-    const currentSeconds = startSeconds + (position / 100) * (endSeconds - startSeconds);
+    const startSeconds = 0 * 60 + 53; // 0:53
+    const endSeconds = 5 * 60 + 38; // 5:38
+    const minPositionPercent = 2.5;
+    const maxPositionPercent = 97.5;
+    const positionRange = maxPositionPercent - minPositionPercent;
+
+    // interpolationFactor: 0 when position is maxPositionPercent (visual left), 1 when position is minPositionPercent (visual right).
+    // This maps the playhead's visual left (high 'position' value, e.g., 97.5) to startSeconds (0:53)
+    // and visual right (low 'position' value, e.g., 2.5) to endSeconds (5:38).
+    const interpolationFactor = positionRange > 0 ? (maxPositionPercent - position) / positionRange : 0;
+    
+    const currentSeconds = startSeconds + interpolationFactor * (endSeconds - startSeconds);
     const minutes = Math.floor(currentSeconds / 60);
     const seconds = Math.floor(currentSeconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // const clipsForExplorer derivation is removed as MusicalExplorer is now route-based.
+
   return (
-    <div className={`relative h-64 bg-gradient-to-b from-transparent to-red-950/5 rounded-xl border border-amber-200/30 overflow-hidden ${className}`}>
-      <svg
-        ref={svgRef}
+    <div className={`timeline-container-wrapper ${className}`}>
+      <div className="timeline-svg-container">
+        <svg
+          ref={svgRef}
         className="w-full h-full timeline-svg"
-        viewBox="0 0 400 200"
-        preserveAspectRatio="none"
-        onClick={handleSvgClick}
+        viewBox={`0 ${VIEWBOX_MIN_Y} ${effectiveViewBoxWidth} ${VIEWBOX_HEIGHT}`} // Use defined constants
+        preserveAspectRatio="xMidYMid meet" // This will ensure content scales correctly with new viewBox
+        onMouseDown={handleSvgMouseDown}
+        onTouchStart={handleSvgTouchStart}
       >
-        {/* Subtle highlighting for climax areas */}
+        {/* Subtle highlighting for climax areas - These will need adjustment based on effectiveViewBoxWidth */}
+        {/* For now, let's use percentages of effectiveViewBoxWidth for x and width */}
         <rect
-          x="176"
+          x={effectiveViewBoxWidth * (1 - MAIN_CLIMAX_AREA.end/100)}
           y="0"
-          width="48"
-          height="180"
+          width={effectiveViewBoxWidth * (MAIN_CLIMAX_AREA.end/100 - MAIN_CLIMAX_AREA.start/100)}
+          height="172"
           fill="url(#mainClimaxGradient)"
-          opacity="0.15"
-          rx="4"
+          opacity="0.3"
         />
         <rect
-          x="304"
+          x={effectiveViewBoxWidth * (1 - SECONDARY_CLIMAX_AREA.end/100)}
           y="0"
-          width="32"
-          height="180"
+          width={effectiveViewBoxWidth * (SECONDARY_CLIMAX_AREA.end/100 - SECONDARY_CLIMAX_AREA.start/100)}
+          height="172"
           fill="url(#secondaryClimaxGradient)"
-          opacity="0.1"
-          rx="4"
+          opacity="0.25"
         />
         
         {/* Gradient definitions */}
         <defs>
           <linearGradient id="mainClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#8b2942" stopOpacity="0.2"/>
-            <stop offset="50%" stopColor="#8b2942" stopOpacity="0.4"/>
-            <stop offset="100%" stopColor="#8b2942" stopOpacity="0.1"/>
+            <stop offset="0%" stopColor="#8b2942" stopOpacity="0.3"/>
+            <stop offset="50%" stopColor="#8b2942" stopOpacity="0.6"/>
+            <stop offset="100%" stopColor="#8b2942" stopOpacity="0.2"/>
           </linearGradient>
           <linearGradient id="secondaryClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#b8860b" stopOpacity="0.15"/>
-            <stop offset="50%" stopColor="#b8860b" stopOpacity="0.3"/>
-            <stop offset="100%" stopColor="#b8860b" stopOpacity="0.1"/>
+            <stop offset="0%" stopColor="#78716c" stopOpacity="0.25"/> {/* stone-500 */}
+            <stop offset="50%" stopColor="#78716c" stopOpacity="0.5"/> {/* stone-500 */}
+            <stop offset="100%" stopColor="#78716c" stopOpacity="0.15"/> {/* stone-500 */}
           </linearGradient>
         </defs>
         
         {/* Baseline (median recording range) */}
         <path
-          d="M0,172 L400,172"
+          d={`M0,172 L${effectiveViewBoxWidth},172`}
           stroke="#666"
           fill="none"
-          strokeWidth="3"
+          strokeWidth="1.5"
           opacity="0.5"
         />
         
@@ -293,15 +503,17 @@ export function InteractiveTimeline({
           stroke="#d63384"
           fill="none"
           strokeWidth="1.5"
-          opacity="0.75"
+          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#d63384" ? 1 : 0.2}
+          style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
         <path
           d={variancePaths.horowitz}
-          stroke="#b8860b"
+          stroke="#57534e" /* Changed from #b8860b to stone-600 (gray) */
           fill="none"
           strokeWidth="1.5"
-          opacity="0.75"
+          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#57534e" ? 1 : 0.2} /* Updated ID here */
+          style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
         <path
@@ -309,7 +521,8 @@ export function InteractiveTimeline({
           stroke="#2e8b57"
           fill="none"
           strokeWidth="1.5"
-          opacity="0.75"
+          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#2e8b57" ? 1 : 0.2}
+          style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
         <path
@@ -317,7 +530,8 @@ export function InteractiveTimeline({
           stroke="#8b4513"
           fill="none"
           strokeWidth="1.5"
-          opacity="0.75"
+          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#8b4513" ? 1 : 0.2}
+          style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
         <path
@@ -325,7 +539,8 @@ export function InteractiveTimeline({
           stroke="#4169e1"
           fill="none"
           strokeWidth="1.5"
-          opacity="0.75"
+          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#4169e1" ? 1 : 0.2}
+          style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
         <path
@@ -333,65 +548,55 @@ export function InteractiveTimeline({
           stroke="#9932cc"
           fill="none"
           strokeWidth="1.5"
-          opacity="0.75"
+          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#9932cc" ? 1 : 0.2}
+          style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
         {/* Interactive Playhead */}
         <g
           ref={playheadGroupRef}
-          className="playhead-group"
+          className={`playhead-group ${timelineState.isDragging ? 'playhead-marker-active' : ''}`}
+          onMouseEnter={() => {
+            if (playheadGroupRef.current) {
+              playheadGroupRef.current.classList.add('playhead-marker-active');
+            }
+          }}
+          onMouseLeave={() => {
+            if (playheadGroupRef.current && !timelineState.isDragging) {
+              playheadGroupRef.current.classList.remove('playhead-marker-active');
+            }
+          }}
         >
           <line
             x1={playheadX}
-            y1="8"
+            y1="25.2"
             x2={playheadX}
-            y2="174"
-            stroke="hsl(var(--accent))"
-            strokeWidth="2.5"
-            strokeDasharray="4,2"
+            y2="166.1"
+            stroke="#8b2942"
+            strokeWidth="0.5"
+            strokeDasharray="4,4.1"
+            opacity="0.6"
           />
-          <circle
-            cx={playheadX}
-            cy="172"
-            r="6"
-            fill="hsl(var(--accent))"
-            stroke="hsl(var(--parchment))"
-            strokeWidth="2"
-          />
-          <circle
-            cx={playheadX}
-            cy="8"
-            r="4"
-            fill="hsl(var(--accent))"
-            opacity="0.7"
-          />
+          {/* Bottom Marker (pointing upwards) */}
+          <PlayheadMarkerIcon x={playheadX - 5} y={144.5} rotation={180} width={10} height={12.5} />
+          {/* Top Marker (pointing downwards) */}
+          <PlayheadMarkerIcon x={playheadX - 5} y={20} rotation={0} width={10} height={12.5} />
+          
           {/* Current time display attached to playhead */}
-          <rect
-            x={playheadX - 18}
-            y="178"
-            width="36"
-            height="16"
-            fill="hsl(var(--accent))"
-            rx="8"
-            opacity="0.9"
-          />
           <text
             x={playheadX}
-            y="188"
+            y="38"
             textAnchor="middle"
-            fontSize="10"
-            fill="white"
-            fontFamily="Source Sans Pro, sans-serif"
-            fontWeight="600"
+            className="playhead-time-text" // Added class for styling
           >
             {formatCurrentTime(timelineState.currentPosition)}
           </text>
           
           {/* Invisible hit area for easier dragging */}
           <rect
-            x={playheadX - 8}
+            x={playheadX - 16}
             y="0"
-            width="16"
+            width="32"
             height="180"
             fill="transparent"
             className="playhead-hitarea"
@@ -399,12 +604,73 @@ export function InteractiveTimeline({
             onTouchStart={handleTouchStart}
           />
         </g>
-      </svg>
-      
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-3 font-sans-custom text-xs text-stone-600 opacity-70 h-6 items-center bg-gradient-to-t from-amber-50/90 to-transparent">
-        <span>3:25</span>
-        <span>4:17</span>
+
+        {/* Interpretive Variance Title */}
+        {titleText && (
+          <text
+            x={effectiveViewBoxWidth * (1 - 0.423)} // Flipped position
+            y="185" // Positioned below the top playhead circle, adjust as needed
+            textAnchor="end" // Align text to the end (right) for flipped layout
+            className="timeline-title" // Added class for styling
+          >
+            {titleText}
+          </text>
+        )}
+        {titleText && (
+          <text
+            x={effectiveViewBoxWidth * (1 - 0.013)} // Flipped position
+            y="185" // Positioned below the top playhead circle, adjust as needed
+            textAnchor="end" // Align text to the end (right) for flipped layout
+            className="timeline-time-display" // Added class for styling
+          >
+            5:38
+          </text>
+        )}
+        {titleText && (
+          <text
+            x={effectiveViewBoxWidth * (1 - 0.95)} // Flipped position
+            y="185" // Positioned below the top playhead circle, adjust as needed
+            textAnchor="start" // Align text to the start (left) for flipped layout
+            className="timeline-time-display" // Added class for styling
+          >
+            0:53
+          </text>
+        )}
+        </svg>
       </div>
+      {/* MusicalExplorer is no longer rendered directly here.
+          It will be rendered by a route in App.tsx via MusicalExplorerPageWrapper.
+      */}
     </div>
   );
 }
+
+// New SVG Marker Component
+interface PlayheadMarkerIconProps {
+  x: number;
+  y: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
+}
+
+const PlayheadMarkerIcon = ({ x, y, rotation = 0, width = 10, height = 12.5 }: PlayheadMarkerIconProps) => {
+  return (
+    <svg
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      viewBox="0 0 20 25" // New viewBox "0 0 20 25"
+      xmlns="http://www.w3.org/2000/svg"
+      className="playhead-marker"
+      style={{ overflow: 'visible' }}
+    >
+      {/* Rotate group around center of new viewBox (10, 12.5) */}
+      <g transform={`rotate(${rotation} 10 26.8)`}>
+        {/* New SVG path for the marker */}
+        <path d="M 9 10.5 L 3 4 L 3 0 L 17 0 L 17 4 L 11 10.5 Z" fill="currentColor"/>
+      </g>
+    </svg>
+  );
+};

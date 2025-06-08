@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { InteractiveTimeline } from './InteractiveTimeline';
 import { RecordingsSection } from './RecordingsSection';
-import { PieceInfo, Recording } from '@/types/music';
+import { PieceInfo, RecordingClip } from '@/types/music'; // Updated to RecordingClip
+
+// Removed old audio imports
 
 const pieceInfo: PieceInfo = {
   composer: "Rachmaninoff",
@@ -11,49 +13,19 @@ const pieceInfo: PieceInfo = {
   endTime: "4:17"
 };
 
-const recordings: Recording[] = [
-  {
-    id: "rubinstein-1937",
-    artistName: "Arthur Rubinstein",
-    recordingYear: 1937,
-    colorCode: "#d63384"
-  },
-  {
-    id: "horowitz-1957",
-    artistName: "Vladimir Horowitz",
-    recordingYear: 1957,
-    colorCode: "#b8860b"
-  },
-  {
-    id: "pires-1996",
-    artistName: "Maria João Pires",
-    recordingYear: 1996,
-    colorCode: "#2e8b57"
-  },
-  {
-    id: "richter-1971",
-    artistName: "Sviatoslav Richter",
-    recordingYear: 1971,
-    colorCode: "#8b4513"
-  },
-  {
-    id: "pollini-1989",
-    artistName: "Maurizio Pollini",
-    recordingYear: 1989,
-    colorCode: "#4169e1"
-  },
-  {
-    id: "ashkenazy-1982",
-    artistName: "Vladimir Ashkenazy",
-    recordingYear: 1982,
-    colorCode: "#9932cc"
-  }
-];
+// Removed old hardcoded recordings array
 
-export function MusicalExplorer() {
+interface MusicalExplorerProps {
+  clips: RecordingClip[];
+}
+
+export function MusicalExplorer({ clips }: MusicalExplorerProps) {
+console.log('MusicalExplorer: received clips:', clips);
   const [currentPosition, setCurrentPosition] = useState(30);
-  const [showExploreHint, setShowExploreHint] = useState(false);
+  // const [showExploreHint, setShowExploreHint] = useState(false); // Removed state
   const [recordingsSectionVisible, setRecordingsSectionVisible] = useState(false);
+  const [hoveredGraphLineId, setHoveredGraphLineId] = useState<string | null>(null);
+  const [stickiedGraphLineId, setStickiedGraphLineId] = useState<string | null>(null);
   const [staffLines, setStaffLines] = useState<number[]>([]);
 
   // Generate staff lines for background
@@ -74,20 +46,32 @@ export function MusicalExplorer() {
   };
 
   const handleInteractionStart = () => {
-    setShowExploreHint(true);
+    // setShowExploreHint(true); // Removed
     setRecordingsSectionVisible(true);
     
-    // Hide hint after 3 seconds
-    setTimeout(() => {
-      setShowExploreHint(false);
-    }, 3000);
+    // Hide hint after 3 seconds - Removed
+    // setTimeout(() => {
+    //   setShowExploreHint(false);
+    // }, 3000);
   };
 
   const handlePositionUpdate = (position: number) => {
     setCurrentPosition(position);
     // Update recordings visibility based on position
-    const isInClimaxArea = position > 45 && position < 55;
-    setRecordingsSectionVisible(isInClimaxArea);
+    const isInMainClimaxArea = position > 44 && position < 56; // Matches InteractiveTimeline
+    const isInSecondaryClimaxArea = position > 76 && position < 84; // Matches InteractiveTimeline
+    const isInAnyClimaxArea = isInMainClimaxArea || isInSecondaryClimaxArea;
+    setRecordingsSectionVisible(isInAnyClimaxArea);
+  };
+
+  const handleRecordingHover = (graphLineId: string | null) => {
+    setHoveredGraphLineId(graphLineId);
+  };
+
+  const handleRecordingClick = (graphLineId: string) => {
+    setStickiedGraphLineId(prevStickiedId =>
+      prevStickiedId === graphLineId ? null : graphLineId
+    );
   };
 
   const formatCurrentTime = (position: number) => {
@@ -100,7 +84,7 @@ export function MusicalExplorer() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center p-2 md:p-4">
+    <div className="bg-gradient-to-br from-stone-100 to-stone-200 flex justify-center p-2 md:p-4"> {/* Changed amber-50 to stone-100 */}
       {/* Background Staff Lines */}
       <div className="staff-background">
         {staffLines.map((top, index) => (
@@ -113,48 +97,43 @@ export function MusicalExplorer() {
       </div>
 
       {/* Main Container - Optimized for narrow columns */}
-      <div className="w-full max-w-3xl glass-effect border border-amber-200/60 rounded-2xl shadow-medium overflow-hidden animate-fade-in-up">
+      <div className="w-full max-w-3xl glass-effect rounded-2xl shadow-medium overflow-hidden animate-fade-in-up bg-gradient-to-b from-stone-100/95 via-stone-200/90 to-stone-300/95"> {/* Added vertical gradient, ensured high alpha for glass effect */}
         {/* Header - More compact */}
-        <header className="bg-gradient-to-r from-amber-50/90 to-stone-50/90 p-4 md:p-6 text-center border-b border-amber-200 relative ornament">
-          <div className="font-sans-custom text-xs uppercase tracking-[2px] text-red-900 font-semibold mb-2">
+        <header className="p-2 md:p-3 pt-3 md:pt-5 text-center relative ornament"> {/* Removed background gradient and border */}
+          <div className="font-sans-custom text-xs uppercase tracking-[2px] text-red-900 font-semibold mb-3 mt-2 opacity-50">
             Currently Exploring
           </div>
-          <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-stone-800 mb-1">
-            {pieceInfo.composer}
-          </h1>
-          <div className="font-display text-lg md:text-xl italic text-red-900 mb-1">
-            {pieceInfo.title}
-          </div>
-          <div className="font-sans-custom text-sm md:text-base text-stone-700 opacity-80">
-            {pieceInfo.movement}
+          {/* Composer, Title, Movement on one line */}
+          <div className="flex justify-center w-full mt-1">
+            <div className="flex items-center">
+              <span className="font-display text-3xl italic text-red-900">
+                {pieceInfo.composer}
+              </span>
+              <span className="text-red-900 font-bold text-sm mx-5">  </span>
+              <span className="font-display text-3xl text-stone-800">
+                {pieceInfo.title}
+              </span>
+              <span className="text-red-900 font-bold text-sm mx-5">  </span>
+              <span className="font-display text-3xl text-stone-500 opacity-80">
+                {pieceInfo.movement}
+              </span>
+            </div>
           </div>
         </header>
 
         {/* Main Content - Reduced padding */}
-        <main className="p-4 md:p-6">
+        <main className="pt-2 md:pt-3 px-4 md:px-6 pb-4 md:pb-6"> {/* Reduced top padding */}
           {/* Variance Graph Section - More compact */}
-          <section className="glass-effect border border-amber-200/40 rounded-xl p-4 md:p-5 mb-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-              <h2 className="font-display text-lg md:text-xl font-semibold text-stone-800">
-                Interpretive Variance
-              </h2>
-              <div
-                className={`font-sans-custom text-xs text-red-900 font-medium transition-opacity duration-300 flex items-center gap-1.5 ${
-                  showExploreHint ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                Drag to explore this moment
-              </div>
-            </div>
+          <section>
+            {/* The div that previously held the hint has been removed entirely. */}
 
             {/* Interactive Timeline */}
             <InteractiveTimeline
               onPositionChange={handlePositionUpdate}
               onInteractionStart={handleInteractionStart}
+              activeGraphLineId={stickiedGraphLineId ?? hoveredGraphLineId} // Prioritize stickied, then hovered
               className="mb-3"
+              titleText="Interpretive Variance" // Pass the title text here
             />
 
 
@@ -162,8 +141,10 @@ export function MusicalExplorer() {
 
           {/* Recordings Section - Only visible in climax area */}
           <RecordingsSection
-            recordings={recordings}
+            clips={clips} // Pass clips directly
             isVisible={recordingsSectionVisible}
+            // onRecordingHover, stickiedGraphLineId, and onRecordingClick are removed
+            // as they are not active props in RecordingsSectionProps
           />
         </main>
       </div>

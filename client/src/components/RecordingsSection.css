@@ -1,0 +1,474 @@
+/* Styles for RecordingsSection, adapted from the prototype */
+
+.recordings-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem; /* Initial padding */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  /* border: 1px solid #e5e7eb; */ /* Initial border removed */
+  animation: recordings-section-slide-down 0.4s ease-out; /* Renamed for specificity */
+  transform-origin: top;
+
+  /* For container height transition */
+  overflow: hidden; /* Crucial for max-height */
+  max-height: 1000px; /* Adjust based on typical max content height + padding. 1000px is a safe default. */
+  transition: max-height 0.4s ease-in-out,
+              padding-top 0.4s ease-in-out,
+              padding-bottom 0.4s ease-in-out;
+              /* border-width 0.4s ease-in-out; */ /* Transition for border-width removed */
+}
+
+/* Renamed keyframes to be specific to this component */
+@keyframes recordings-section-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1); /* Matches initial state for transform */
+  }
+}
+
+@keyframes recordings-section-slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scaleY(0.95);
+  } /* Matches 'from' state of slide-down for transform */
+}
+
+.recordings-section.hiding {
+  animation: recordings-section-slide-up 0.4s ease-in forwards; /* For content opacity/transform */
+
+  /* For container collapse */
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0; /* Collapse all borders */
+}
+
+.recordings-grid {
+  width: 100%;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  font-family: 'EB Garamond', 'Lora', 'Merriweather', 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: #2c2517;
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
+.section-header p {
+  font-family: 'Lora', serif; /* Or 'Source Sans Pro' if preferred for paragraph text */
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.recordings-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.recording-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Distribute space for the new layout */
+  gap: 0.75rem; /* Reduced for compactness */
+  padding: 1.2rem 1.75rem 1rem 1.5rem; /* Adjusted top/bottom, maintained left/right */
+  background: #f9f9f9;
+  border-radius: 12px;
+  box-sizing: border-box; /* Added for consistent layout with border changes */
+  transition: all 0.3s ease; /* Will transition border-color, transform, box-shadow */
+  position: relative;
+  animation: fade-in-up 0.5s ease-out; /* Animation for individual cards */
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recording-card-color-border {
+  width: 5px; /* Default thickness */
+  height: calc(100% - 0px); /* Account for 2px top and 2px bottom main stroke */
+  position: absolute;
+  left: 0px; /* Inset by main border width */
+  top: 0px;  /* Inset by main border width */
+  bottom: 2px;
+  border-top-left-radius: 20px; /* outerRadius (12px) - strokeWidth (2px) */
+  border-bottom-left-radius: 20px; /* outerRadius (12px) - strokeWidth (2px) */
+  transition: background-color 0.3s ease, width 0.3s ease; /* Added width transition */
+}
+.recording-card:hover {
+  background: #f5f5f5;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.recording-card:hover .recording-card-color-border {
+  width: 10px; /* Make border thicker on hover too */
+}
+.recording-card.stickied-card {
+  background: #f0f0f0; /* Slightly different background for stickied */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.recording-card.stickied-card .recording-card-color-border {
+  width: 10px; /* Double the thickness */
+  transition: width 0.3s ease; /* Smooth transition for thickness change */
+}
+
+/* Ensure hover on a stickied card doesn't change its appearance from stickied state */
+.recording-card.stickied-card:hover {
+  background: #f0f0f0;
+  border-top-color: #8b2942;    /* Explicitly maintain */
+  border-right-color: #8b2942;   /* Explicitly maintain */
+  border-bottom-color: #8b2942; /* Explicitly maintain */
+  border-left-color: #8b2942;   /* Explicitly maintain */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.recording-card.stickied-card:hover .recording-card-color-border {
+  width: 10px; /* Maintain double thickness on hover */
+}
+
+.recording-card.playing {
+  background: linear-gradient(135deg, #fef2f2 0%, #fef7f7 100%);
+  border-top-color: #8b2942;
+  border-right-color: #8b2942;
+  border-bottom-color: #8b2942;
+  border-left-color: #8b2942; /* Ensure full border when playing */
+  box-shadow: 0 8px 25px rgba(139, 41, 66, 0.15);
+}
+
+.album-art-container {
+  flex-shrink: 0;
+  width: 100px; /* New larger default size (78px * 1.05) */
+  height: 100px; /* New larger default size (78px * 1.05) */
+  border-radius: 6px; /* Rounded corners for the container */
+  overflow: hidden; /* To keep image and shine within rounded corners */
+  position: relative; /* For positioning the shine pseudo-element */
+  opacity: 1; /* Initially visible */
+  transform: translateY(-3px); /* Apply slight elevation by default */
+  transition: transform 0.3s ease, opacity 0.3s ease; /* Animate both properties */
+  cursor: pointer; /* Indicate it's clickable for Phase 4 */
+  box-shadow: 0 2px 4px rgba(32, 10, 15, 0.25);
+}
+
+.recording-card:hover .album-art-container {
+  /* opacity: 1; Ensure it remains visible, not strictly needed if default is 1 */
+  /* Album art size and position no longer change on hover */
+}
+
+/* Ensure album art fades out and shrinks when the section is hiding */
+.recordings-section.hiding .recording-card .album-art-container {
+  opacity: 0;
+  transform: scale(0.8);
+  /* The existing transition on .album-art-container will apply:
+     transition: transform 0.3s ease, opacity 0.3s ease; */
+}
+
+.album-art-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 8px; /* Match container's border-radius */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.album-art-container:hover::after {
+  opacity: 0.6; /* Slightly reduce shine intensity on hover, or change it */
+}
+
+.album-art-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px; /* Match container's border-radius if image is direct child and container has no padding */
+}
+
+/* Remove old placeholder and icon styles */
+/* .album-art-placeholder { ... } */
+/* .album-icon { ... } */
+/* .recording-card:hover .album-icon { ... } */
+
+/* Styles for the new interactive controls container */
+.interactive-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Basic styles for the play-button in its new location. Will be enhanced in Phase 2. */
+.play-button {
+  width: 40px; /* Example size, can be adjusted */
+  height: 40px; /* Example size, can be adjusted */
+  background: #8b2942;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Softer shadow */
+}
+
+.play-button:hover {
+  background: #a1324d; /* Darken on hover */
+}
+
+.recording-card.playing .play-button {
+  background: #991b1b; /* Keep distinct style for playing state for now */
+}
+
+
+.recording-info {
+  flex-grow: 1;
+  /* Ensure it doesn't get squeezed too much if text is long */
+  min-width: 0; /* Allows flex item to shrink below its content size */
+  /* margin-left is handled by parent gap */
+  /* margin-right is handled by parent gap */
+}
+
+.pianist-name {
+  font-family: 'EB Garamond', 'Lora', 'Merriweather', 'Playfair Display', serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2c2517;
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+}
+
+.recording-details {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.875rem; /* Consistent with previous year, label can be differentiated by color or weight if needed */
+  color: #6b7280; /* Default color, year part can be styled differently if desired */
+  margin-bottom: 0.125rem;
+  line-height: 1.4; /* Adjust for readability if year and label are on same line */
+}
+
+/* If you want the year to be a different color, you'd need to wrap it in a span inside the JSX */
+/* For example:
+  .recording-details .year-span { color: #8b2942; font-weight: 600; }
+  .recording-details .label-span { color: #6b7280; }
+*/
+
+/* Styles for the animated sound wave when playing, now inside the button */
+.sound-wave-animated {
+  display: flex;
+  gap: 2px; /* Adjust gap as needed to fit button */
+  align-items: flex-end; /* Align bars to the bottom */
+  height: 16px; /* Match icon size for consistency, adjust as needed */
+  line-height: 16px; /* Ensure vertical centering if needed */
+}
+
+.sound-wave-animated span {
+  width: 3px; /* Adjust width as needed */
+  background: white; /* Sound wave color against button background */
+  border-radius: 2px;
+  animation: wave 1.2s ease-in-out infinite;
+  display: inline-block; /* Ensure spans behave correctly */
+}
+
+/* Adjust heights to fit within the button, these are examples */
+.sound-wave-animated span:nth-child(1) {
+  height: 60%; /* Relative to parent (.sound-wave-animated height) */
+  animation-delay: 0s;
+}
+.sound-wave-animated span:nth-child(2) {
+  height: 100%;
+  animation-delay: 0.2s;
+}
+.sound-wave-animated span:nth-child(3) {
+  height: 40%;
+  animation-delay: 0.4s;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: scaleY(0.5); /* Start smaller */
+    opacity: 0.7;
+  }
+  50% {
+    transform: scaleY(1); /* Grow to full height of span */
+    opacity: 1;
+  }
+}
+
+/* Styles for Album Art Modal */
+.album-art-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0); /* Changed from 0.75 to 0 to remove dimming */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* Ensure it's on top */
+  animation: modal-fade-in 0.3s ease-out;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.album-art-modal-content {
+  background: #2c2517; /* Dark background for contrast */
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  color: #f0eade; /* Light text color */
+  max-width: 90vw; /* Max width relative to viewport */
+  max-height: 90vh; /* Max height relative to viewport */
+}
+
+.modal-art-flipper {
+  width: 90vw; /* Changed to 90% of viewport width */
+  /* Height will be set dynamically by an aspect ratio or based on content,
+     or we can set a max-height and let the image determine its height within that.
+     For now, let's make it square based on the new width. */
+  height: 90vw; /* Making it square for now, can be adjusted */
+  max-width: 600px; /* Added a max-width to prevent it from becoming too large on very wide screens */
+  max-height: 600px; /* Added a max-height to match max-width for a square aspect ratio */
+  position: relative;
+  perspective: 1000px; /* For 3D effect */
+}
+
+.modal-art-front,
+.modal-art-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden; /* Hide the back of the element during flip */
+  transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1); /* Smooth flip animation */
+  border-radius: 8px;
+  overflow: hidden; /* Ensure image stays within rounded corners */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.modal-art-front {
+  transform: rotateY(0deg);
+}
+
+.modal-art-back {
+  transform: rotateY(180deg);
+  background-color: #3a3225; /* Placeholder background for back if image is missing */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.modal-art-flipper.flipped .modal-art-front {
+  transform: rotateY(-180deg);
+}
+
+.modal-art-flipper.flipped .modal-art-back {
+  transform: rotateY(0deg);
+}
+
+.modal-album-art-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.modal-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.modal-button {
+  background-color: #8b2942;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.modal-button:hover {
+  background-color: #a1324d;
+}
+
+.modal-button.close-button {
+  background-color: #6b7280;
+}
+
+.modal-button.close-button:hover {
+  background-color: #808791;
+}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .recordings-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .recording-card {
+    flex-direction: column;
+    text-align: center;
+    /* gap is already 1rem, but can be confirmed or adjusted if needed */
+  }
+}
+/* Styles for Magnifier */
+.magnifier-glass {
+  position: absolute;
+  border: 3px solid #8b2942; /* Similar to play button color for consistency */
+  border-radius: 50%; /* Circular magnifier */
+  cursor: none; /* Hide cursor when magnifier is active */
+  box-shadow: 0 0 10px rgba(0,0,0,0.25);
+  pointer-events: none; /* Make sure it doesn't interfere with mouse events on the image */
+  z-index: 1010; /* Ensure it's above the image but below other modal controls if necessary */
+  background-color: white; /* Optional: to prevent seeing through if image loads slow */
+  overflow: hidden; /* Ensures the magnified image stays within the circle */
+}
+
+.modal-art-back {
+  position: relative; /* Needed for absolute positioning of magnifier */
+  overflow: hidden; /* Ensures magnifier doesn't go outside bounds if image is smaller */
+}
