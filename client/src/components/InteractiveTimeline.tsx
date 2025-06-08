@@ -1,8 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { useLocation } from "wouter";
 import { TimelineState } from '@/types/music';
-// import { sectionAClips, sectionBClips } from '@/data/recordingClips'; // No longer needed here
-// import { MusicalExplorer } from './MusicalExplorer'; // No longer needed here
 import './InteractiveTimeline.css'; // Import the new CSS file
 
 interface InteractiveTimelineProps {
@@ -20,21 +17,17 @@ export function InteractiveTimeline({
   className = "",
   titleText // Destructure the new prop
 }: InteractiveTimelineProps) {
-  const [, setLocation] = useLocation(); // Added for navigation
-  const [timelineState, setTimelineState] = useState<Omit<TimelineState, 'isRecordingsSectionVisible'> & { hasInteracted: boolean }>({
+  const [timelineState, setTimelineState] = useState<TimelineState>({
     currentPosition: 30,
     isDragging: false,
     hasInteracted: false,
-    // isRecordingsSectionVisible is removed from here and managed by route
+    isRecordingsSectionVisible: false
   });
+
   const timelineStateRef = useRef(timelineState);
   useEffect(() => {
     timelineStateRef.current = timelineState;
   }, [timelineState]);
-
-  // activeSectionKey is still used to determine which section to navigate to
-  const [activeSectionKey, setActiveSectionKey] = useState<string | null>(null);
-  // const [isExplorerVisible, setIsExplorerVisible] = useState<boolean>(false); // No longer needed, route controls visibility
 
   const svgRef = useRef<SVGSVGElement>(null);
   const playheadGroupRef = useRef<SVGGElement>(null);
@@ -47,6 +40,7 @@ export function InteractiveTimeline({
   // Define climax areas (percentages)
   const MAIN_CLIMAX_AREA = useMemo(() => ({ start: 44, end: 56, center: 50 }), []);
   const SECONDARY_CLIMAX_AREA = useMemo(() => ({ start: 76, end: 84, center: 80 }), []);
+
 
   // Helper function to generate smooth variance paths with realistic interpretive differences
   const generateVariancePath = useCallback((
@@ -70,9 +64,8 @@ export function InteractiveTimeline({
     
     // Generate raw points first
     for (let i = 0; i <= numPoints; i++) {
-      const x_original = (width * i) / numPoints;
-      const x = width - x_original; // Flipped x-coordinate
-      const xPercent = (i / numPoints) * 100; // xPercent remains logical for climax calculation
+      const x = (width * i) / numPoints;
+      const xPercent = (i / numPoints) * 100;
       
       // Calculate distance from both climax points
       const distanceFromMainClimax = Math.abs(xPercent - mainClimaxCenter);
@@ -183,70 +176,51 @@ export function InteractiveTimeline({
 
     const mouseXRelativeToVisualSvg = clientX - rect.left - visualPaddingLeft;
     // currentSvgX is now in the coordinate system of the newViewBoxWidth
-    const currentSvgX = visualContentWidth > 0 ? ((visualContentWidth - mouseXRelativeToVisualSvg) / visualContentWidth) * newViewBoxWidth : 0;
+    const currentSvgX = visualContentWidth > 0 ? (mouseXRelativeToVisualSvg / visualContentWidth) * newViewBoxWidth : 0;
     
     // Clamp based on 2.5% padding on each side of the newViewBoxWidth
     const padding = newViewBoxWidth * 0.025;
     const clampedX = Math.max(padding, Math.min(newViewBoxWidth - padding, currentSvgX));
     const percentage = newViewBoxWidth > 0 ? (clampedX / newViewBoxWidth) * 100 : 0;
     
-    // Update currentPosition first
     setTimelineState(prev => ({
       ...prev,
-      currentPosition: percentage,
+      currentPosition: percentage
     }));
+    
     onPositionChange(percentage);
+    
+    setTimelineState(prev => {
+      const isInMainClimaxArea = percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end;
+      const isInSecondaryClimaxArea = percentage > SECONDARY_CLIMAX_AREA.start && percentage < SECONDARY_CLIMAX_AREA.end;
+      const isInAnyClimaxArea = isInMainClimaxArea || isInSecondaryClimaxArea;
 
-    // Then, based on the new position, update activeSectionKey and navigate
-    const isInMainClimaxArea = percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end;
-    const isInSecondaryClimaxArea = percentage > SECONDARY_CLIMAX_AREA.start && percentage < SECONDARY_CLIMAX_AREA.end;
-    const isInAnyClimaxArea = isInMainClimaxArea || isInSecondaryClimaxArea;
+      let newHasInteracted = prev.hasInteracted;
+      let newIsRecordingsSectionVisible = prev.isRecordingsSectionVisible;
+      let shouldCallOnInteractionStart = false;
 
-    let newHasInteracted = timelineStateRef.current.hasInteracted;
-    let shouldCallOnInteractionStart = false;
-
-    let newActiveSectionKey: string | null = null;
-    if (isInMainClimaxArea) {
-      newActiveSectionKey = 'A';
-    } else if (isInSecondaryClimaxArea) {
-      newActiveSectionKey = 'B';
-    }
-
-    if (newActiveSectionKey) {
-      // Check if interaction start needs to be called
-      // This logic assumes that navigating to an explorer path means it "becomes visible"
-      // and navigating away means it "becomes hidden".
-      // We need to know the *previous* route or if we were previously on a non-explorer route.
-      // For simplicity, we'll assume if we are setting a newActiveSectionKey, and it's the first interaction,
-      // then onInteractionStart should be called.
-      // A more robust solution might involve checking the current location path.
-      if (!newHasInteracted) {
-        shouldCallOnInteractionStart = true;
+      if (isInAnyClimaxArea && !prev.isRecordingsSectionVisible) { // Becoming visible
+        if (!prev.hasInteracted) { // First time interaction leading to visibility
+           shouldCallOnInteractionStart = true;
+        }
+        newHasInteracted = true;
+        newIsRecordingsSectionVisible = true;
+      } else if (!isInAnyClimaxArea && prev.isRecordingsSectionVisible) { // Becoming hidden
+        newIsRecordingsSectionVisible = false;
       }
-      newHasInteracted = true;
-
-      if (activeSectionKey !== newActiveSectionKey) { // Only navigate if section changes or becomes active
-        setActiveSectionKey(newActiveSectionKey);
-        setLocation(`/explorer/${newActiveSectionKey}`);
+      
+      if (shouldCallOnInteractionStart) {
+          onInteractionStart();
       }
-    } else { // Not in any climax area
-      if (activeSectionKey !== null) { // Only navigate if a section was active
-        setActiveSectionKey(null);
-        setLocation('/'); // Navigate to base path
-      }
-    }
 
-    if (shouldCallOnInteractionStart) {
-      onInteractionStart();
-    }
-
-    if (newHasInteracted !== timelineStateRef.current.hasInteracted) {
-      setTimelineState(prev => ({
+      return {
         ...prev,
+        currentPosition: percentage,
         hasInteracted: newHasInteracted,
-      }));
-    }
-  }, [onPositionChange, onInteractionStart, effectiveViewBoxWidth, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA, setLocation, activeSectionKey]);
+        isRecordingsSectionVisible: newIsRecordingsSectionVisible,
+      };
+    });
+  }, [onPositionChange, onInteractionStart, effectiveViewBoxWidth, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -268,59 +242,45 @@ export function InteractiveTimeline({
     const currentTimelineState = timelineStateRef.current;
     if (!currentTimelineState.isDragging) return;
 
-    const { currentPosition: droppedPosition, hasInteracted: prevHasInteracted } = currentTimelineState;
+    const { currentPosition: droppedPosition, isRecordingsSectionVisible: prevIsVisible, hasInteracted: prevHasInteracted } = currentTimelineState;
 
     let snapToPercentage: number | null = null;
-    let newSnappedSectionKey: string | null = null;
-
     if (droppedPosition > MAIN_CLIMAX_AREA.start && droppedPosition < MAIN_CLIMAX_AREA.end) {
       snapToPercentage = MAIN_CLIMAX_AREA.center;
-      newSnappedSectionKey = 'A';
     } else if (droppedPosition > SECONDARY_CLIMAX_AREA.start && droppedPosition < SECONDARY_CLIMAX_AREA.end) {
       snapToPercentage = SECONDARY_CLIMAX_AREA.center;
-      newSnappedSectionKey = 'B';
     }
 
-    let finalHasInteracted = prevHasInteracted;
-    let shouldCallOnInteractionStart = false;
-
-    if (snapToPercentage !== null && newSnappedSectionKey) {
+    if (snapToPercentage !== null) {
       const finalPosition = snapToPercentage;
 
-      // If we are snapping to a section, it implies interaction.
-      // Call onInteractionStart if this is the first such interaction.
-      // This logic assumes that navigating to an explorer path means it "becomes visible".
-      if (!prevHasInteracted) {
-        shouldCallOnInteractionStart = true;
+      const finalIsInMain = finalPosition > MAIN_CLIMAX_AREA.start && finalPosition < MAIN_CLIMAX_AREA.end;
+      const finalIsInSecondary = finalPosition > SECONDARY_CLIMAX_AREA.start && finalPosition < SECONDARY_CLIMAX_AREA.end;
+      const finalIsInAny = finalIsInMain || finalIsInSecondary;
+
+      let shouldCallOnInteractionStart = false;
+      if (finalIsInAny && !prevIsVisible) {
+          if (!prevHasInteracted) {
+              shouldCallOnInteractionStart = true;
+          }
       }
-      finalHasInteracted = true;
       
       if (shouldCallOnInteractionStart) {
-        onInteractionStart();
+          onInteractionStart();
       }
 
       setTimelineState(prev => ({
         ...prev,
         isDragging: false,
         currentPosition: finalPosition,
-        hasInteracted: finalHasInteracted,
+        isRecordingsSectionVisible: finalIsInAny,
+        hasInteracted: prev.hasInteracted || finalIsInAny,
       }));
       onPositionChange(finalPosition);
-      
-      if (activeSectionKey !== newSnappedSectionKey) {
-        setActiveSectionKey(newSnappedSectionKey);
-        setLocation(`/explorer/${newSnappedSectionKey}`);
-      }
-
-    } else { // Dropped outside any climax area
+    } else {
       setTimelineState(prev => ({ ...prev, isDragging: false }));
-      // onPositionChange for the droppedPosition was already called by updatePlayheadPosition
-      if (activeSectionKey !== null) { // Only navigate if a section was active
-        setActiveSectionKey(null);
-        setLocation('/'); // Navigate to base path
-      }
     }
-  }, [onPositionChange, onInteractionStart, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA, setLocation, activeSectionKey]);
+  }, [onPositionChange, onInteractionStart, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
 
 
   const handleMouseUp = useCallback(() => {
@@ -387,7 +347,7 @@ export function InteractiveTimeline({
       }
     };
 
-    document.addEventListener('mousemove', stableHandleMouseMove, { passive: false });
+    document.addEventListener('mousemove', stableHandleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('touchmove', stableHandleTouchMove, { passive: false }); // passive: false if preventDefault is used
     document.addEventListener('touchend', handleTouchEnd);
@@ -399,56 +359,22 @@ export function InteractiveTimeline({
       document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd, VIEWBOX_HEIGHT]); // Added VIEWBOX_HEIGHT dependency
-
-  // This useEffect is no longer needed as clipsForExplorer is derived directly in render
-  // and visibility is handled by isExplorerVisible state.
-  // useEffect(() => {
-  //   const { currentPosition } = timelineStateRef.current; // Use ref to avoid dependency on timelineState object
-  //   const isInMainClimaxArea = currentPosition > MAIN_CLIMAX_AREA.start && currentPosition < MAIN_CLIMAX_AREA.end;
-  //   const isInSecondaryClimaxArea = currentPosition > SECONDARY_CLIMAX_AREA.start && currentPosition < SECONDARY_CLIMAX_AREA.end;
-  //
-  //   if (isExplorerVisible) {
-  //     if (activeSectionKey === 'A' && isInMainClimaxArea) {
-  //       // clipsForExplorer will be set in render
-  //     } else if (activeSectionKey === 'B' && isInSecondaryClimaxArea) {
-  //       // clipsForExplorer will be set in render
-  //     } else {
-  //       // This condition might indicate a mismatch or a transition state.
-  //       // For safety, if visible but no valid active section, perhaps hide or clear clips.
-  //       // However, the primary logic in event handlers should prevent this.
-  //     }
-  //   } else {
-  //     // clipsForExplorer will be null in render
-  //   }
-  // }, [isExplorerVisible, activeSectionKey, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
-  
-  const playheadX = effectiveViewBoxWidth - (timelineState.currentPosition / 100) * effectiveViewBoxWidth; // Flipped playheadX
+ 
+  const playheadX = (timelineState.currentPosition / 100) * effectiveViewBoxWidth;
 
   const formatCurrentTime = (position: number) => {
-    const startSeconds = 0 * 60 + 53; // 0:53
-    const endSeconds = 5 * 60 + 38; // 5:38
-    const minPositionPercent = 2.5;
-    const maxPositionPercent = 97.5;
-    const positionRange = maxPositionPercent - minPositionPercent;
-
-    // interpolationFactor: 0 when position is maxPositionPercent (visual left), 1 when position is minPositionPercent (visual right).
-    // This maps the playhead's visual left (high 'position' value, e.g., 97.5) to startSeconds (0:53)
-    // and visual right (low 'position' value, e.g., 2.5) to endSeconds (5:38).
-    const interpolationFactor = positionRange > 0 ? (maxPositionPercent - position) / positionRange : 0;
-    
-    const currentSeconds = startSeconds + interpolationFactor * (endSeconds - startSeconds);
+    const startSeconds = 3 * 60 + 25; // 3:25
+    const endSeconds = 4 * 60 + 17; // 4:17
+    const currentSeconds = startSeconds + (position / 100) * (endSeconds - startSeconds);
     const minutes = Math.floor(currentSeconds / 60);
     const seconds = Math.floor(currentSeconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // const clipsForExplorer derivation is removed as MusicalExplorer is now route-based.
-
   return (
-    <div className={`timeline-container-wrapper ${className}`}>
-      <div className="timeline-svg-container">
-        <svg
-          ref={svgRef}
+    <div className={`timeline-container ${className}`}>
+      <svg
+        ref={svgRef}
         className="w-full h-full timeline-svg"
         viewBox={`0 ${VIEWBOX_MIN_Y} ${effectiveViewBoxWidth} ${VIEWBOX_HEIGHT}`} // Use defined constants
         preserveAspectRatio="xMidYMid meet" // This will ensure content scales correctly with new viewBox
@@ -458,17 +384,17 @@ export function InteractiveTimeline({
         {/* Subtle highlighting for climax areas - These will need adjustment based on effectiveViewBoxWidth */}
         {/* For now, let's use percentages of effectiveViewBoxWidth for x and width */}
         <rect
-          x={effectiveViewBoxWidth * (1 - MAIN_CLIMAX_AREA.end/100)}
+          x={effectiveViewBoxWidth * 0.44} // Corresponds to 176/400
           y="0"
-          width={effectiveViewBoxWidth * (MAIN_CLIMAX_AREA.end/100 - MAIN_CLIMAX_AREA.start/100)}
+          width={effectiveViewBoxWidth * 0.12} // Corresponds to 48/400
           height="172"
           fill="url(#mainClimaxGradient)"
           opacity="0.3"
         />
         <rect
-          x={effectiveViewBoxWidth * (1 - SECONDARY_CLIMAX_AREA.end/100)}
+          x={effectiveViewBoxWidth * 0.76} // Corresponds to 304/400
           y="0"
-          width={effectiveViewBoxWidth * (SECONDARY_CLIMAX_AREA.end/100 - SECONDARY_CLIMAX_AREA.start/100)}
+          width={effectiveViewBoxWidth * 0.08} // Corresponds to 32/400
           height="172"
           fill="url(#secondaryClimaxGradient)"
           opacity="0.25"
@@ -608,9 +534,9 @@ export function InteractiveTimeline({
         {/* Interpretive Variance Title */}
         {titleText && (
           <text
-            x={effectiveViewBoxWidth * (1 - 0.423)} // Flipped position
+            x={effectiveViewBoxWidth * 0.423} // Positioned near the left padding
             y="185" // Positioned below the top playhead circle, adjust as needed
-            textAnchor="end" // Align text to the end (right) for flipped layout
+            textAnchor="start" // Align text to the start (left)
             className="timeline-title" // Added class for styling
           >
             {titleText}
@@ -618,29 +544,25 @@ export function InteractiveTimeline({
         )}
         {titleText && (
           <text
-            x={effectiveViewBoxWidth * (1 - 0.013)} // Flipped position
+            x={effectiveViewBoxWidth * 0.013} // Positioned near the left padding
             y="185" // Positioned below the top playhead circle, adjust as needed
-            textAnchor="end" // Align text to the end (right) for flipped layout
+            textAnchor="start" // Align text to the start (left)
             className="timeline-time-display" // Added class for styling
           >
-            5:38
+            3:25
           </text>
         )}
         {titleText && (
           <text
-            x={effectiveViewBoxWidth * (1 - 0.95)} // Flipped position
+            x={effectiveViewBoxWidth * 0.95} // Positioned near the left padding
             y="185" // Positioned below the top playhead circle, adjust as needed
-            textAnchor="start" // Align text to the start (left) for flipped layout
+            textAnchor="start" // Align text to the start (left)
             className="timeline-time-display" // Added class for styling
           >
-            0:53
+            4:17
           </text>
         )}
-        </svg>
-      </div>
-      {/* MusicalExplorer is no longer rendered directly here.
-          It will be rendered by a route in App.tsx via MusicalExplorerPageWrapper.
-      */}
+      </svg>
     </div>
   );
 }

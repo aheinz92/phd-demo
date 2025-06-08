@@ -1,26 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, Square } from 'lucide-react';
 import './RecordingsSection.css'; // Ensure this CSS file is correctly named and placed
-
+import placeholderAlbumArt from '../assets/images/front_horowitz_rachmaninoff_rca_1.jpg';
+import placeholderAlbumBack from '../assets/images/back_ogdon_rachmaninoff_rca_1.jpg';
 
 // Example audio imports - you'll need to ensure your 'recordings' data uses these or similar paths
-// import alkanSonataExcerpt from '../assets/audio/alkanSonata8XFugue_excerpt.mp3'; // Removed
-// import rachConcerto2Excerpt from '../assets/audio/rachconcerto2opening_excerpt.mp3'; // Removed
-// import rachSonataClimaxExcerpt from '../assets/audio/rachsonata2climax_excerpt.mp3'; // Removed
-// import scriabinOp11Excerpt from '../assets/audio/scriabinOp11no13choir.mp3'; // Removed
+import alkanSonataExcerpt from '../assets/audio/alkanSonata8XFugue_excerpt.mp3';
+import rachConcerto2Excerpt from '../assets/audio/rachconcerto2opening_excerpt.mp3';
+import rachSonataClimaxExcerpt from '../assets/audio/rachsonata2climax_excerpt.mp3';
+import scriabinOp11Excerpt from '../assets/audio/scriabinOp11no13choir.mp3';
 
 
-import { RecordingClip } from '../types/music';
+import { Recording } from '../types/music';
 
 interface RecordingsSectionProps {
-  clips: RecordingClip[];
+  recordings: Recording[];
   isVisible: boolean; // This prop will control the visibility, similar to selectedMoment in prototype
   className?: string;
-  // Comments about old props removed
+  onRecordingHover: (graphLineId: string | null) => void; // Callback for hover events
+  stickiedGraphLineId?: string | null; // Optional: ID of the currently "stickied" card
+  onRecordingClick?: (graphLineId: string) => void; // Optional: Callback for click events
 }
 
-export function RecordingsSection({ clips, isVisible, className = "" }: RecordingsSectionProps) {
-console.log('RecordingsSection: received clips:', clips);
+export function RecordingsSection({ recordings, isVisible, className = "", onRecordingHover, stickiedGraphLineId, onRecordingClick }: RecordingsSectionProps) {
   const [playingRecording, setPlayingRecording] = useState<string | null>(null);
   const [hoveredControlId, setHoveredControlId] = useState<string | null>(null);
   const [expandedRecordingId, setExpandedRecordingId] = useState<string | null>(null);
@@ -142,9 +144,9 @@ console.log('RecordingsSection: received clips:', clips);
     });
   };
 
-  const handleRecordingPlay = (clipId: string) => {
-    console.log('[handleRecordingPlay] Clicked:', clipId, 'Current playing:', playingRecording);
-    const selectedClip = clips.find(c => c.id === clipId);
+  const handleRecordingPlay = (recordingId: string) => {
+    console.log('[handleRecordingPlay] Clicked:', recordingId, 'Current playing:', playingRecording);
+    const selectedRecording = recordings.find(r => r.id === recordingId);
 
     if (!audioRef.current) {
       console.error("[handleRecordingPlay] audioRef.current is null! Cannot play audio.");
@@ -152,8 +154,8 @@ console.log('RecordingsSection: received clips:', clips);
     }
     const currentAudio = audioRef.current;
 
-    if (!selectedClip || !selectedClip.audioSrc) {
-      console.warn("[handleRecordingPlay] Audio snippet not found for recording:", clipId, "Selected recording:", selectedClip);
+    if (!selectedRecording || !selectedRecording.audioSnippet) {
+      console.warn("[handleRecordingPlay] Audio snippet not found for recording:", recordingId, "Selected recording:", selectedRecording);
       // Stop any currently playing audio if a button for a record without a snippet is clicked
       if (!currentAudio.paused) {
         console.log('[handleRecordingPlay] No snippet, stopping current audio if any.');
@@ -163,29 +165,29 @@ console.log('RecordingsSection: received clips:', clips);
       setPlayingRecording(null); // Ensure UI reflects no playback
       return;
     }
-    console.log('[handleRecordingPlay] Audio snippet found:', selectedClip.audioSrc);
+    console.log('[handleRecordingPlay] Audio snippet found:', selectedRecording.audioSnippet);
 
-    if (playingRecording === clipId) {
-      console.log('[handleRecordingPlay] Stopping and resetting current audio:', clipId);
+    if (playingRecording === recordingId) {
+      console.log('[handleRecordingPlay] Stopping and resetting current audio:', recordingId);
       currentAudio.pause();
       currentAudio.currentTime = 0;
       setPlayingRecording(null);
     } else {
-      console.log('[handleRecordingPlay] Attempting to play new/different audio:', clipId);
+      console.log('[handleRecordingPlay] Attempting to play new/different audio:', recordingId);
       if (!currentAudio.paused) {
         console.log('[handleRecordingPlay] Pausing previous audio first.');
         currentAudio.pause();
         currentAudio.currentTime = 0;
       }
-      currentAudio.src = selectedClip.audioSrc;
+      currentAudio.src = selectedRecording.audioSnippet;
       console.log('[handleRecordingPlay] Set audio src to:', currentAudio.src);
       
       currentAudio.load(); // Explicitly call load after setting new src
       currentAudio.play().then(() => {
-        console.log('[handleRecordingPlay] Playback started successfully for:', clipId);
-        setPlayingRecording(clipId);
+        console.log('[handleRecordingPlay] Playback started successfully for:', recordingId);
+        setPlayingRecording(recordingId);
       }).catch(error => {
-        console.error("[handleRecordingPlay] Error playing audio for:", clipId, error);
+        console.error("[handleRecordingPlay] Error playing audio for:", recordingId, error);
         setPlayingRecording(null); // Reset if play fails
       });
     }
@@ -195,10 +197,6 @@ console.log('RecordingsSection: received clips:', clips);
     return null;
   }
 
-if (!clips || !Array.isArray(clips) || clips.length === 0) {
-    console.log('RecordingsSection: No valid clips to render');
-    return null;
-  }
   return (
     <div className={`recordings-section ${isHiding ? 'hiding' : ''} ${className}`}>
       <div className="recordings-grid">
@@ -207,52 +205,60 @@ if (!clips || !Array.isArray(clips) || clips.length === 0) {
         </div>
         
         <div className="recordings-list">
-          {/* Add a check to ensure clips is defined and is an array */}
-          {(!clips || !Array.isArray(clips)) ? null : clips.map((clip, index) => {
-console.log('RecordingsSection: mapping clip', index, clip);
-            const isPlaying = playingRecording === clip.id;
-            const isControlHovered = hoveredControlId === clip.id;
+          {recordings.map((recording) => {
+            const isPlaying = playingRecording === recording.id;
+            const isControlHovered = hoveredControlId === recording.id;
+            const isStickied = stickiedGraphLineId === (recording.graphLineColor || recording.id);
 
             return (
               <div
-                key={clip.id}
-                className={`recording-card ${isPlaying ? 'playing' : ''}`}
+                key={recording.id}
+                className={`recording-card ${isPlaying ? 'playing' : ''} ${isStickied ? 'stickied-card' : ''}`}
+                onMouseEnter={() => onRecordingHover(recording.graphLineColor || recording.id)} // Use graphLineColor or fallback to id
+                onMouseLeave={() => onRecordingHover(null)}
+                onClick={() => onRecordingClick && onRecordingClick(recording.graphLineColor || recording.id)}
               >
+                {recording.graphLineColor && (
+                  <div
+                    className="recording-card-color-border"
+                    style={{ backgroundColor: recording.graphLineColor }}
+                  ></div>
+                )}
                 <div
                   className="album-art-container"
                   onClick={() => {
-                    setExpandedRecordingId(clip.id);
+                    setExpandedRecordingId(recording.id);
                     setIsFlipped(false); // Reset flip state when opening new art
                   }}
                 >
                   <img
-                    src={clip.frontArtSrc}
-                    alt={`Album art for ${clip.pianistLastName} - ${clip.year}`}
+                    src={recording.albumArt || placeholderAlbumArt}
+                    alt={`Album art for ${recording.artistName} - ${recording.recordingYear}`}
                     className="album-art-image"
                   />
                 </div>
                 
                 <div className="recording-info">
-                  <h4 className="pianist-name">{clip.pianistLastName}</h4>
+                  <h4 className="pianist-name">{recording.artistName}</h4>
                   <p className="recording-details">
-                    {clip.year} {clip.isLive && "(Live)"}
-                    {clip.recordLabel && ` • ${clip.recordLabel}`}
+                    {recording.recordingYear}
+                    {recording.recordLabel && ` • ${recording.recordLabel}`}
                   </p>
                 </div>
 
                 <div className="interactive-controls">
                   <button
-                    className="play-button"
-                    onClick={() => handleRecordingPlay(clip.id)}
-                    onMouseEnter={() => setHoveredControlId(clip.id)}
+                    className="play-button" // This class will be restyled in CSS in the next step
+                    onClick={() => handleRecordingPlay(recording.id)}
+                    onMouseEnter={() => setHoveredControlId(recording.id)}
                     onMouseLeave={() => setHoveredControlId(null)}
-                    aria-label={isPlaying ? `Stop recording by ${clip.pianistLastName}` : `Play recording by ${clip.pianistLastName}`}
+                    aria-label={isPlaying ? `Stop recording by ${recording.artistName}` : `Play recording by ${recording.artistName}`}
                   >
                     {isPlaying ? (
                       isControlHovered ? (
-                        <Square size={16} />
+                        <Square size={16} /> // Represents Stop button
                       ) : (
-                        <div className="sound-wave-animated">
+                        <div className="sound-wave-animated"> {/* Renamed for clarity, styles to be added in CSS */}
                           <span></span>
                           <span></span>
                           <span></span>
@@ -262,7 +268,7 @@ console.log('RecordingsSection: mapping clip', index, clip);
                       isControlHovered ? (
                         <Play size={16} />
                       ) : (
-                        <Volume2 size={16} />
+                        <Volume2 size={16} /> // Default icon
                       )
                     )}
                   </button>
@@ -274,9 +280,9 @@ console.log('RecordingsSection: mapping clip', index, clip);
       </div>
 
       {expandedRecordingId && (() => {
-        const currentExpandedClip = clips.find(rec => rec.id === expandedRecordingId);
-        const frontArtUrl = currentExpandedClip?.frontArtSrc; // Fallback handled by recordingClips.ts
-        const backArtUrl = currentExpandedClip?.backArtSrc;   // Fallback handled by recordingClips.ts
+        const currentExpandedRecording = recordings.find(rec => rec.id === expandedRecordingId);
+        const frontArtUrl = currentExpandedRecording?.albumArt || placeholderAlbumArt;
+        const backArtUrl = currentExpandedRecording?.albumArtBack || placeholderAlbumBack;
 
         return (
           <div className="album-art-modal-overlay" onClick={() => setExpandedRecordingId(null)}>

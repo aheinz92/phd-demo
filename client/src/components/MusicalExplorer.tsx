@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { InteractiveTimeline } from './InteractiveTimeline';
 import { RecordingsSection } from './RecordingsSection';
-import { PieceInfo, RecordingClip } from '@/types/music'; // Updated to RecordingClip
+import { PieceInfo, Recording } from '@/types/music';
 
-// Removed old audio imports
+// Audio Imports
+import alkanSonataExcerpt from '../assets/audio/alkanSonata8XFugue_excerpt.mp3';
+import rachConcerto2Excerpt from '../assets/audio/rachconcerto2opening_excerpt.mp3';
+import rachConcerto3Excerpt from '../assets/audio/rachconcerto3midcadenza_excerpt.mp3';
+import rachSonataClimaxExcerpt from '../assets/audio/rachsonata2climax_excerpt.mp3';
+import rachSonataOpeningExcerpt from '../assets/audio/rachsonata2opening_excerpt.mp3';
+import reubkeSonataExcerpt from '../assets/audio/reubkeSonata_excerpt.mp3';
+import scriabinOp11Excerpt from '../assets/audio/scriabinOp11no13choir.mp3';
+import scriabinOp45no1ChoirExcerpt from '../assets/audio/scriabinOp45no1choir.mp3';
+import scriabinOp45no1OriginalExcerpt from '../assets/audio/scriabinOp45no1original.mp3';
+
 
 const pieceInfo: PieceInfo = {
   composer: "Rachmaninoff",
@@ -13,14 +23,66 @@ const pieceInfo: PieceInfo = {
   endTime: "4:17"
 };
 
-// Removed old hardcoded recordings array
+const recordings: Recording[] = [
+  {
+    id: "rubinstein-1937",
+    artistName: "Arthur Rubinstein",
+    recordingYear: 1937,
+    colorCode: "#d63384",
+    graphLineColor: "#d63384",
+    recordLabel: "RCA Victor",
+    audioSnippet: rachSonataClimaxExcerpt
+  },
+  {
+    id: "horowitz-1957",
+    artistName: "Vladimir Horowitz",
+    recordingYear: 1957,
+    colorCode: "#57534e", // Changed from #b8860b (gold) to stone-600 (gray)
+    graphLineColor: "#57534e", // Changed from #b8860b (gold) to stone-600 (gray)
+    recordLabel: "RCA Red Seal",
+    audioSnippet: rachConcerto2Excerpt
+  },
+  {
+    id: "pires-1996",
+    artistName: "Maria João Pires",
+    recordingYear: 1996,
+    colorCode: "#2e8b57",
+    graphLineColor: "#2e8b57",
+    recordLabel: "Deutsche Grammophon",
+    audioSnippet: alkanSonataExcerpt
+  },
+  {
+    id: "richter-1971",
+    artistName: "Sviatoslav Richter",
+    recordingYear: 1971,
+    colorCode: "#8b4513",
+    graphLineColor: "#8b4513",
+    audioSnippet: scriabinOp11Excerpt
+    // No record label for this one, to test conditional rendering
+  },
+  {
+    id: "pollini-1989",
+    artistName: "Maurizio Pollini",
+    recordingYear: 1989,
+    colorCode: "#4169e1",
+    graphLineColor: "#4169e1",
+    recordLabel: "Deutsche Grammophon",
+    audioSnippet: reubkeSonataExcerpt
+  },
+  {
+    id: "ashkenazy-1982",
+    artistName: "Vladimir Ashkenazy",
+    recordingYear: 1982,
+    colorCode: "#9932cc",
+    graphLineColor: "#9932cc",
+    recordLabel: "Decca",
+    audioSnippet: rachSonataOpeningExcerpt
+  }
+  // You can add more recordings and assign scriabinOp45no1ChoirExcerpt,
+  // scriabinOp45no1OriginalExcerpt, and rachConcerto3Excerpt if you have more entries.
+];
 
-interface MusicalExplorerProps {
-  clips: RecordingClip[];
-}
-
-export function MusicalExplorer({ clips }: MusicalExplorerProps) {
-console.log('MusicalExplorer: received clips:', clips);
+export function MusicalExplorer() {
   const [currentPosition, setCurrentPosition] = useState(30);
   // const [showExploreHint, setShowExploreHint] = useState(false); // Removed state
   const [recordingsSectionVisible, setRecordingsSectionVisible] = useState(false);
@@ -32,7 +94,7 @@ console.log('MusicalExplorer: received clips:', clips);
   useEffect(() => {
     const generateStaffLines = () => {
       const lineCount = Math.floor(window.innerHeight / 40);
-      const lines = Array.from({ length: lineCount }, (_, i) => i * 40 + 100);
+      const lines = Array.from({ length: lineCount }, (_, i) => i * 40 + 100);9
       setStaffLines(lines);
     };
 
@@ -141,10 +203,11 @@ console.log('MusicalExplorer: received clips:', clips);
 
           {/* Recordings Section - Only visible in climax area */}
           <RecordingsSection
-            clips={clips} // Pass clips directly
+            recordings={recordings}
             isVisible={recordingsSectionVisible}
-            // onRecordingHover, stickiedGraphLineId, and onRecordingClick are removed
-            // as they are not active props in RecordingsSectionProps
+            onRecordingHover={handleRecordingHover} // Pass hover handler to recordings section
+            stickiedGraphLineId={stickiedGraphLineId} // Pass stickied ID
+            onRecordingClick={handleRecordingClick} // Pass click handler
           />
         </main>
       </div>
