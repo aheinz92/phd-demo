@@ -28,6 +28,7 @@ export interface TimelineState {
   isDragging: boolean;
   hasInteracted: boolean;
   isRecordingsSectionVisible: boolean;
+activeTimelineSection?: 'A' | 'B' | null; // Added to track which timeline highlight is active
 }
 
 export interface PieceInfo {

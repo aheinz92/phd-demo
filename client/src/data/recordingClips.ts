@@ -24,21 +24,21 @@ const imageFiles = [
 ];
 
 const audioFilesA = [
-  'Kateryna_Titova_A_2007_Sony_-_cut.mp3',
-  'Konstantin_Scherbakov_A_1999_Naxos_-_cut.mp3',
-  'Polina_Leschenko_A_2012_Avanti_-_cut.mp3',
-  'Santiago_Rodriguez_A_1993_Elan_-_cut.mp3',
   'Vladimir_Horowitz_A_1980_RCA_Victor_Live_-_cut.mp3',
+  'Polina_Leschenko_A_2012_Avanti_-_cut.mp3',
   'Yevgeny_Sudbin_A_2005_BIS_-_cut.mp3',
+  'Santiago_Rodriguez_A_1993_Elan_-_cut.mp3',
+  'Konstantin_Scherbakov_A_1999_Naxos_-_cut.mp3',
+  'Kateryna_Titova_A_2007_Sony_-_cut.mp3',
 ];
 
 const audioFilesB = [
+  'Vladimir_Horowitz_B_1980_RCA_Victor_Live_-_cut.mp3',
   'Alexei_Sultanov_B_1997_VAI_Live_-_cut.mp3',
-  'Alexis_Weissenberg_B_2009_Deutsche_Grammophon_-_cut.mp3',
-  'Kateryna_Ttitova_B_2007_Sony_-_cut.mp3',
   'Marc-André_Hamelin_B_1994_Port_Royal_-_cut.mp3',
   'Sergio_Fiorentino_B_1994_Appian_-_cut.mp3',
-  'Vladimir_Horowitz_B_1980_RCA_Victor_Live_-_cut.mp3',
+  'Alexis_Weissenberg_B_2009_Deutsche_Grammophon_-_cut.mp3',
+  'Kateryna_Titova_B_2007_Sony_-_cut.mp3',
 ];
 
 interface ParsedFilename {

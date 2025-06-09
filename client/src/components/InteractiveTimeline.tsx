@@ -3,25 +3,26 @@ import { TimelineState } from '@/types/music';
 import './InteractiveTimeline.css'; // Import the new CSS file
 
 interface InteractiveTimelineProps {
-  onPositionChange: (position: number) => void;
-  onInteractionStart: () => void;
-  activeGraphLineId?: string | null; // Added to receive hovered line ID
+  onPositionChange: (update: { position: number; activeSection: 'A' | 'B' | null }) => void;
+  onInteractionStart: (activeSection: 'A' | 'B' | null) => void;
+  activeGraphLineId?: string | null; 
   className?: string;
-  titleText?: string; // New prop for the title
+  titleText?: string; 
 }
 
 export function InteractiveTimeline({
   onPositionChange,
   onInteractionStart,
-  activeGraphLineId = null, // Default to null
+  activeGraphLineId = null,
   className = "",
-  titleText // Destructure the new prop
+  titleText 
 }: InteractiveTimelineProps) {
   const [timelineState, setTimelineState] = useState<TimelineState>({
     currentPosition: 30,
     isDragging: false,
     hasInteracted: false,
-    isRecordingsSectionVisible: false
+    isRecordingsSectionVisible: false,
+    activeTimelineSection: null, 
   });
 
   const timelineStateRef = useRef(timelineState);
@@ -33,101 +34,80 @@ export function InteractiveTimeline({
   const playheadGroupRef = useRef<SVGGElement>(null);
   const [effectiveViewBoxWidth, setEffectiveViewBoxWidth] = useState(400);
 
-  // Define ViewBox constants
-  const VIEWBOX_MIN_Y = 20; // Align with top playhead marker
-  const VIEWBOX_HEIGHT = 172; // Prev height 184 - (20 - 8) = 172. Keeps bottom edge at 192.
+  const VIEWBOX_MIN_Y = 20; 
+  const VIEWBOX_HEIGHT = 172; 
 
-  // Define climax areas (percentages)
-  const MAIN_CLIMAX_AREA = useMemo(() => ({ start: 41, end: 59, center: 50 }), []);
-  const SECONDARY_CLIMAX_AREA = useMemo(() => ({ start: 14, end: 26, center: 20 }), []);
+  const MAIN_CLIMAX_AREA = useMemo(() => ({ start: 43, end: 61, center: 52 }), []); // Later one for 'B'
+  const SECONDARY_CLIMAX_AREA = useMemo(() => ({ start: 14, end: 28, center: 21 }), []); // Earlier one for 'A'
 
-
-  // Helper function to generate smooth variance paths with realistic interpretive differences
   const generateVariancePath = useCallback((
     width: number,
     intensity: number,
-    seed: number // For consistent randomness
+    seed: number 
   ): string => {
-    const numPoints = 60; // More points for smoother curves
+    const numPoints = 70; 
     const rawPoints: { x: number; y: number }[] = [];
-    const baseline = 172; // Move baseline down to near bottom of new taller view
-    const mainClimaxCenter = 50; // Position of main climax (50% of timeline)
-    const mainClimaxWidth = 12; // Width of main climax area
-    const secondaryClimaxCenter = 80; // Position of secondary climax (80% of timeline)
-    const secondaryClimaxWidth = 8; // Width of secondary climax area
+    const baseline = 180; 
+    const mainClimaxCenter = 45; 
+    const mainClimaxWidth = 12; 
+    const secondaryClimaxCenter = 77.5; 
+    const secondaryClimaxWidth = 17; 
     
-    // Use seed for consistent "randomness"
     const seededRandom = (index: number) => {
       const x = Math.sin(seed * 9999 + index * 1234) * 10000;
       return x - Math.floor(x);
     };
     
-    // Generate raw points first
     for (let i = 0; i <= numPoints; i++) {
       const x = width - ((width * i) / numPoints);
       const xPercent = (i / numPoints) * 100;
       
-      // Calculate distance from both climax points
       const distanceFromMainClimax = Math.abs(xPercent - mainClimaxCenter);
       const distanceFromSecondaryClimax = Math.abs(xPercent - secondaryClimaxCenter);
       
-      let varianceFactor = 0.08 + (seededRandom(i) * 0.12); // Base variance
+      let varianceFactor = 0.08 + (seededRandom(i) * 0.42); 
       
-      // Main climax influence (stronger)
       if (distanceFromMainClimax < mainClimaxWidth) {
         const mainClimaxIntensity = 1 - (distanceFromMainClimax / mainClimaxWidth);
         varianceFactor += mainClimaxIntensity * 1.2;
       }
       
-      // Secondary climax influence (moderate)
       if (distanceFromSecondaryClimax < secondaryClimaxWidth) {
         const secondaryClimaxIntensity = 1 - (distanceFromSecondaryClimax / secondaryClimaxWidth);
         varianceFactor += secondaryClimaxIntensity * 0.6;
       }
       
-      // Add musician-specific character
       const musicianVariance = seededRandom(i + 100) * 0.25;
       const finalVariance = (varianceFactor + musicianVariance) * intensity;
       
-      // Calculate y position (upward from baseline) - ensure lines get very close to baseline
       const y = baseline - Math.max(0.5, finalVariance * 95);
       
       rawPoints.push({ x, y });
     }
     
-    // Apply simple smoothing
     const smoothedPoints = rawPoints.map((point, i) => {
       if (i === 0 || i === rawPoints.length - 1) return point;
-      
       const prev = rawPoints[i - 1];
       const next = rawPoints[i + 1];
-      
       return {
         x: point.x,
-        y: (prev.y + point.y + next.y) / 3 // Simple 3-point average
+        y: (prev.y + point.y + next.y) / 3 
       };
     });
     
-    // Create smooth curve using quadratic curves
     const pathParts = [`M${smoothedPoints[0].x},${smoothedPoints[0].y}`];
-    
     for (let i = 1; i < smoothedPoints.length - 1; i++) {
       const current = smoothedPoints[i];
       const next = smoothedPoints[i + 1];
       const midX = (current.x + next.x) / 2;
       const midY = (current.y + next.y) / 2;
-      
       pathParts.push(`Q${current.x},${current.y} ${midX},${midY}`);
     }
-    
-    // Final point
     const lastPoint = smoothedPoints[smoothedPoints.length - 1];
     pathParts.push(`L${lastPoint.x},${lastPoint.y}`);
-    
     return pathParts.join(" ");
   }, []);
 
-  // Generate stable variance paths with more performers
   const variancePaths = useMemo(() => ({
     rubinstein: generateVariancePath(effectiveViewBoxWidth, 1.0, 1.2),
     horowitz: generateVariancePath(effectiveViewBoxWidth, 0.85, 2.8),
@@ -140,13 +120,10 @@ export function InteractiveTimeline({
   const updatePlayheadPosition = useCallback((clientX: number) => {
     if (!svgRef.current) return;
     const rect = svgRef.current.getBoundingClientRect();
-
-    // Determine the effective viewBox width to make content fill the SVG area
     const svgElementWidth = rect.width;
     const svgElementHeight = rect.height;
-    let newViewBoxWidth = 400; // Default
-    if (svgElementHeight > 0) { // Avoid division by zero
-        // Maintain a viewBox height of VIEWBOX_HEIGHT, adjust width based on element aspect ratio
+    let newViewBoxWidth = 400; 
+    if (svgElementHeight > 0) {
         newViewBoxWidth = (svgElementWidth / svgElementHeight) * VIEWBOX_HEIGHT;
     }
     if (newViewBoxWidth !== effectiveViewBoxWidth) {
@@ -156,91 +133,92 @@ export function InteractiveTimeline({
     const viewBoxMeta = { width: newViewBoxWidth, height: VIEWBOX_HEIGHT };
     const rectAspectRatio = rect.width / rect.height;
     const viewBoxAspectRatio = viewBoxMeta.width / viewBoxMeta.height;
-
     let visualContentWidth: number;
     let visualPaddingLeft: number;
 
-    if (rect.width === 0 || rect.height === 0) {
-      // Avoid division by zero or incorrect calculations if SVG isn't rendered yet
-      return;
-    }
+    if (rect.width === 0 || rect.height === 0) return;
 
     if (rectAspectRatio > viewBoxAspectRatio) {
       const scale = rect.height / viewBoxMeta.height;
       visualContentWidth = viewBoxMeta.width * scale;
       visualPaddingLeft = (rect.width - visualContentWidth) / 2;
-    } else { // Covers letterboxed and matching aspect ratios
+    } else { 
       visualContentWidth = rect.width;
       visualPaddingLeft = 0;
     }
 
     const mouseXRelativeToVisualSvg = clientX - rect.left - visualPaddingLeft;
-    // currentSvgX is now in the coordinate system of the newViewBoxWidth
     const currentSvgX = visualContentWidth > 0 ? (mouseXRelativeToVisualSvg / visualContentWidth) * newViewBoxWidth : 0;
     
-    // Clamp based on 2.5% padding on each side of the newViewBoxWidth
     const padding = newViewBoxWidth * 0.025;
     const clampedX = Math.max(padding, Math.min(newViewBoxWidth - padding, currentSvgX));
     const percentage = newViewBoxWidth > 0 ? (clampedX / newViewBoxWidth) * 100 : 0;
     
-    onPositionChange(percentage);
+    let activeSection: 'A' | 'B' | null = null;
+    if (percentage > SECONDARY_CLIMAX_AREA.start && percentage < SECONDARY_CLIMAX_AREA.end) {
+      activeSection = 'A'; 
+    } else if (percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end) {
+      activeSection = 'B'; 
+    }
+    onPositionChange({ position: percentage, activeSection });
 
-    const newIsRecordingsSectionVisible = (percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end) ||
-                                      (percentage > SECONDARY_CLIMAX_AREA.start && percentage < SECONDARY_CLIMAX_AREA.end);
-
-    const previousState = timelineStateRef.current; // State before this update sequence
+    const newIsRecordingsSectionVisible = activeSection !== null;
+    const previousState = timelineStateRef.current; 
     let shouldCallInteractionStartFlag = false;
 
     if (newIsRecordingsSectionVisible && !previousState.isRecordingsSectionVisible && !previousState.hasInteracted) {
-      onInteractionStart(); // Call before setTimelineState
-      shouldCallInteractionStartFlag = true; // To update local hasInteracted state
+      onInteractionStart(activeSection); 
+      shouldCallInteractionStartFlag = true; 
     }
 
     setTimelineState(prev => ({
       ...prev,
       currentPosition: percentage,
       isRecordingsSectionVisible: newIsRecordingsSectionVisible,
+      activeTimelineSection: activeSection, // Correctly update local state
       hasInteracted: prev.hasInteracted || shouldCallInteractionStartFlag,
     }));
-  }, [onPositionChange, onInteractionStart, effectiveViewBoxWidth, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
+  }, [onPositionChange, onInteractionStart, effectiveViewBoxWidth, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA, VIEWBOX_HEIGHT]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setTimelineState(prev => ({ ...prev, isDragging: true }));
-    if (playheadGroupRef.current) {
-      // playheadGroupRef.current.style.transform = 'scale(1.1)'; // Removed to prevent floating effect
-    }
     updatePlayheadPosition(e.clientX);
   }, [updatePlayheadPosition]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (timelineState.isDragging) {
+    if (timelineStateRef.current.isDragging) { // Use ref to get current dragging state
       e.preventDefault();
       updatePlayheadPosition(e.clientX);
     }
-  }, [updatePlayheadPosition]); // timelineState.isDragging is accessed via timelineStateRef in the effect
+  }, [updatePlayheadPosition]); 
 
   const handleInteractionEnd = useCallback(() => {
-    const previousState = timelineStateRef.current; // State before this interaction end logic
+    const previousState = timelineStateRef.current; 
     if (!previousState.isDragging) return;
 
     const { currentPosition: droppedPosition } = previousState;
 
     let snapToPercentage: number | null = null;
-    if (droppedPosition > MAIN_CLIMAX_AREA.start && droppedPosition < MAIN_CLIMAX_AREA.end) {
-      snapToPercentage = MAIN_CLIMAX_AREA.center;
-    } else if (droppedPosition > SECONDARY_CLIMAX_AREA.start && droppedPosition < SECONDARY_CLIMAX_AREA.end) {
+    let activeSectionOnSnap: 'A' | 'B' | null = null;
+
+    // Check SECONDARY_CLIMAX_AREA (earlier one, for 'A') first
+    if (droppedPosition > SECONDARY_CLIMAX_AREA.start && droppedPosition < SECONDARY_CLIMAX_AREA.end) {
       snapToPercentage = SECONDARY_CLIMAX_AREA.center;
+      activeSectionOnSnap = 'A';
+    } else if (droppedPosition > MAIN_CLIMAX_AREA.start && droppedPosition < MAIN_CLIMAX_AREA.end) {
+      // Then check MAIN_CLIMAX_AREA (later one, for 'B')
+      snapToPercentage = MAIN_CLIMAX_AREA.center;
+      activeSectionOnSnap = 'B';
     }
 
     if (snapToPercentage !== null) {
       const finalPosition = snapToPercentage;
-      const newIsRecordingsSectionVisible = (finalPosition > MAIN_CLIMAX_AREA.start && finalPosition < MAIN_CLIMAX_AREA.end) ||
-                                          (finalPosition > SECONDARY_CLIMAX_AREA.start && finalPosition < SECONDARY_CLIMAX_AREA.end);
+      const newIsRecordingsSectionVisible = activeSectionOnSnap !== null;
       
       let shouldCallInteractionStartFlag = false;
       if (newIsRecordingsSectionVisible && !previousState.isRecordingsSectionVisible && !previousState.hasInteracted) {
-        onInteractionStart(); // Call before setTimelineState
+        onInteractionStart(activeSectionOnSnap); 
         shouldCallInteractionStartFlag = true;
       }
 
@@ -249,11 +227,18 @@ export function InteractiveTimeline({
         isDragging: false,
         currentPosition: finalPosition,
         isRecordingsSectionVisible: newIsRecordingsSectionVisible,
+        activeTimelineSection: activeSectionOnSnap, 
         hasInteracted: prev.hasInteracted || shouldCallInteractionStartFlag,
       }));
-      onPositionChange(finalPosition);
+      onPositionChange({ position: finalPosition, activeSection: activeSectionOnSnap });
     } else {
-      setTimelineState(prev => ({ ...prev, isDragging: false }));
+      setTimelineState(prev => ({ 
+        ...prev, 
+        isDragging: false,
+        activeTimelineSection: null, 
+        isRecordingsSectionVisible: false 
+      }));
+      onPositionChange({ position: droppedPosition, activeSection: null }); 
     }
   }, [onPositionChange, onInteractionStart, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
 
@@ -266,14 +251,10 @@ export function InteractiveTimeline({
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     setTimelineState(prev => ({ ...prev, isDragging: true }));
-    if (playheadGroupRef.current) {
-      // playheadGroupRef.current.style.transform = 'scale(1.1)'; // Removed to prevent floating effect
-    }
     updatePlayheadPosition(e.touches[0].clientX);
   }, [updatePlayheadPosition]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    // Access isDragging via ref for stability if this callback is memoized with fewer deps
     if (timelineStateRef.current.isDragging && e.touches.length > 0) {
       e.preventDefault();
       updatePlayheadPosition(e.touches[0].clientX);
@@ -290,17 +271,18 @@ export function InteractiveTimeline({
     updatePlayheadPosition(e.clientX);
   }, [updatePlayheadPosition]);
 
-  const handleSvgTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
+  const handleSvgTouchStart = useCallback((event: React.TouchEvent) => {
+    // Direct cast to native TouchEvent if needed by addEventListener,
+    // but React.TouchEvent should be compatible enough for clientX.
+    // The preventDefault is the key part for passive listener issue.
+    event.preventDefault(); 
     setTimelineState(prev => ({ ...prev, isDragging: true }));
-    if (e.touches.length > 0) {
-      updatePlayheadPosition(e.touches[0].clientX);
+    if (event.touches.length > 0) {
+      updatePlayheadPosition(event.touches[0].clientX);
     }
   }, [updatePlayheadPosition]);
-
-  // Set up global event listeners
+ 
   useEffect(() => {
-    // Initial calculation of effectiveViewBoxWidth on mount
     if (svgRef.current) {
       const rect = svgRef.current.getBoundingClientRect();
       const svgElementWidth = rect.width;
@@ -321,25 +303,35 @@ export function InteractiveTimeline({
         handleTouchMove(e);
       }
     };
+    
+    const svgElement = svgRef.current;
 
     document.addEventListener('mousemove', stableHandleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', stableHandleTouchMove, { passive: false }); // passive: false if preventDefault is used
+    document.addEventListener('touchmove', stableHandleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
+    
+    if (svgElement) {
+      // Cast to EventListener for addEventListener compatibility
+      svgElement.addEventListener('touchstart', handleSvgTouchStart as unknown as EventListener, { passive: false });
+    }
 
     return () => {
       document.removeEventListener('mousemove', stableHandleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('touchmove', stableHandleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
+      if (svgElement) {
+        svgElement.removeEventListener('touchstart', handleSvgTouchStart as unknown as EventListener);
+      }
     };
-  }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd, VIEWBOX_HEIGHT]); // Added VIEWBOX_HEIGHT dependency
+  }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd, VIEWBOX_HEIGHT, handleSvgTouchStart]); 
  
   const playheadX = (timelineState.currentPosition / 100) * effectiveViewBoxWidth;
 
   const formatCurrentTime = (position: number) => {
-    const startSeconds = 0 * 60 + 53; // 0:53
-    const endSeconds = 5 * 60 + 38; // 5:38
+    const startSeconds = 0 * 60 + 53; 
+    const endSeconds = 5 * 60 + 38; 
     const currentSeconds = startSeconds + (position / 100) * (endSeconds - startSeconds);
     const minutes = Math.floor(currentSeconds / 60);
     const seconds = Math.floor(currentSeconds % 60);
@@ -351,31 +343,28 @@ export function InteractiveTimeline({
       <svg
         ref={svgRef}
         className="w-full h-full timeline-svg"
-        viewBox={`0 ${VIEWBOX_MIN_Y} ${effectiveViewBoxWidth} ${VIEWBOX_HEIGHT}`} // Use defined constants
-        preserveAspectRatio="xMidYMid meet" // This will ensure content scales correctly with new viewBox
+        viewBox={`0 ${VIEWBOX_MIN_Y} ${effectiveViewBoxWidth} ${VIEWBOX_HEIGHT}`} 
+        preserveAspectRatio="xMidYMid meet" 
         onMouseDown={handleSvgMouseDown}
-        onTouchStart={handleSvgTouchStart}
+        // onTouchStart is handled by manual event listener in useEffect
       >
-        {/* Subtle highlighting for climax areas - These will need adjustment based on effectiveViewBoxWidth */}
-        {/* For now, let's use percentages of effectiveViewBoxWidth for x and width */}
         <rect
-          x={effectiveViewBoxWidth * 0.41} // Corresponds to 164/400 (new: 41%)
+          x={effectiveViewBoxWidth * 0.43} 
           y="0"
-          width={effectiveViewBoxWidth * 0.18} // Corresponds to 72/400 (new: 18%)
+          width={effectiveViewBoxWidth * 0.18} 
           height="172"
           fill="url(#mainClimaxGradient)"
           opacity="0.3"
         />
         <rect
-          x={effectiveViewBoxWidth * 0.14} // Corresponds to 56/400 (new: 14%)
+          x={effectiveViewBoxWidth * 0.14} 
           y="0"
-          width={effectiveViewBoxWidth * 0.12} // Corresponds to 48/400 (new: 12%)
+          width={effectiveViewBoxWidth * 0.14} 
           height="172"
           fill="url(#secondaryClimaxGradient)"
           opacity="0.25"
         />
         
-        {/* Gradient definitions */}
         <defs>
           <linearGradient id="mainClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#8b2942" stopOpacity="0.3"/>
@@ -383,13 +372,12 @@ export function InteractiveTimeline({
             <stop offset="100%" stopColor="#8b2942" stopOpacity="0.2"/>
           </linearGradient>
           <linearGradient id="secondaryClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#78716c" stopOpacity="0.25"/> {/* stone-500 */}
-            <stop offset="50%" stopColor="#78716c" stopOpacity="0.5"/> {/* stone-500 */}
-            <stop offset="100%" stopColor="#78716c" stopOpacity="0.15"/> {/* stone-500 */}
+            <stop offset="0%" stopColor="#78716c" stopOpacity="0.25"/> 
+            <stop offset="50%" stopColor="#78716c" stopOpacity="0.5"/> 
+            <stop offset="100%" stopColor="#78716c" stopOpacity="0.15"/> 
           </linearGradient>
         </defs>
         
-        {/* Baseline (median recording range) */}
         <path
           d={`M0,172 L${effectiveViewBoxWidth},172`}
           stroke="#666"
@@ -398,7 +386,6 @@ export function InteractiveTimeline({
           opacity="0.5"
         />
         
-        {/* Dynamically generated variance paths - 6 different interpretations */}
         <path
           d={variancePaths.rubinstein}
           stroke="#d63384"
@@ -410,10 +397,10 @@ export function InteractiveTimeline({
         
         <path
           d={variancePaths.horowitz}
-          stroke="#57534e" /* Changed from #b8860b to stone-600 (gray) */
+          stroke="#57534e" 
           fill="none"
           strokeWidth="1.5"
-          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#57534e" ? 1 : 0.2} /* Updated ID here */
+          opacity={activeGraphLineId === null ? 0.65 : activeGraphLineId === "#57534e" ? 1 : 0.2} 
           style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
@@ -453,7 +440,6 @@ export function InteractiveTimeline({
           style={{ transition: 'opacity 0.3s ease-in-out' }}
         />
         
-        {/* Interactive Playhead */}
         <g
           ref={playheadGroupRef}
           className={`playhead-group ${timelineState.isDragging ? 'playhead-marker-active' : ''}`}
@@ -478,22 +464,18 @@ export function InteractiveTimeline({
             strokeDasharray="4,4.1"
             opacity="0.6"
           />
-          {/* Bottom Marker (pointing upwards) */}
           <PlayheadMarkerIcon x={playheadX - 5} y={144.5} rotation={180} width={10} height={12.5} />
-          {/* Top Marker (pointing downwards) */}
           <PlayheadMarkerIcon x={playheadX - 5} y={20} rotation={0} width={10} height={12.5} />
           
-          {/* Current time display attached to playhead */}
           <text
             x={playheadX}
             y="38"
             textAnchor="middle"
-            className="playhead-time-text" // Added class for styling
+            className="playhead-time-text" 
           >
             {formatCurrentTime(timelineState.currentPosition)}
           </text>
           
-          {/* Invisible hit area for easier dragging */}
           <rect
             x={playheadX - 16}
             y="0"
@@ -502,37 +484,36 @@ export function InteractiveTimeline({
             fill="transparent"
             className="playhead-hitarea"
             onMouseDown={handleMouseDown}
-            onTouchStart={handleTouchStart}
+            onTouchStart={handleTouchStart} // Keep this for direct touch on playhead
           />
         </g>
 
-        {/* Interpretive Variance Title */}
         {titleText && (
           <text
-            x={effectiveViewBoxWidth * 0.423} // Positioned near the left padding
-            y="185" // Positioned below the top playhead circle, adjust as needed
-            textAnchor="start" // Align text to the start (left)
-            className="timeline-title" // Added class for styling
+            x={effectiveViewBoxWidth * 0.423} 
+            y="185" 
+            textAnchor="start" 
+            className="timeline-title" 
           >
             {titleText}
           </text>
         )}
         {titleText && (
           <text
-            x={effectiveViewBoxWidth * 0.013} // Positioned near the left padding
-            y="185" // Positioned below the top playhead circle, adjust as needed
-            textAnchor="start" // Align text to the start (left)
-            className="timeline-time-display" // Added class for styling
+            x={effectiveViewBoxWidth * 0.013} 
+            y="185" 
+            textAnchor="start" 
+            className="timeline-time-display" 
           >
             0:53
           </text>
         )}
         {titleText && (
           <text
-            x={effectiveViewBoxWidth * 0.95} // Positioned near the left padding
-            y="185" // Positioned below the top playhead circle, adjust as needed
-            textAnchor="start" // Align text to the start (left)
-            className="timeline-time-display" // Added class for styling
+            x={effectiveViewBoxWidth * 0.95} 
+            y="185" 
+            textAnchor="start" 
+            className="timeline-time-display" 
           >
             5:38
           </text>
@@ -542,7 +523,6 @@ export function InteractiveTimeline({
   );
 }
 
-// New SVG Marker Component
 interface PlayheadMarkerIconProps {
   x: number;
   y: number;
@@ -558,14 +538,12 @@ const PlayheadMarkerIcon = ({ x, y, rotation = 0, width = 10, height = 12.5 }: P
       y={y}
       width={width}
       height={height}
-      viewBox="0 0 20 25" // New viewBox "0 0 20 25"
+      viewBox="0 0 20 25" 
       xmlns="http://www.w3.org/2000/svg"
       className="playhead-marker"
       style={{ overflow: 'visible' }}
     >
-      {/* Rotate group around center of new viewBox (10, 12.5) */}
       <g transform={`rotate(${rotation} 10 26.8)`}>
-        {/* New SVG path for the marker */}
         <path d="M 9 10.5 L 3 4 L 3 0 L 17 0 L 17 4 L 11 10.5 Z" fill="currentColor"/>
       </g>
     </svg>

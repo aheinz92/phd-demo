@@ -18,12 +18,13 @@ interface RecordingsSectionProps {
   recordings: Recording[];
   isVisible: boolean; // This prop will control the visibility, similar to selectedMoment in prototype
   className?: string;
+  activeSection?: 'A' | 'B' | null; // New prop to determine which set of recordings to show
   onRecordingHover: (graphLineId: string | null) => void; // Callback for hover events
   stickiedGraphLineId?: string | null; // Optional: ID of the currently "stickied" card
   onRecordingClick?: (graphLineId: string) => void; // Optional: Callback for click events
 }
 
-export function RecordingsSection({ recordings, isVisible, className = "", onRecordingHover, stickiedGraphLineId, onRecordingClick }: RecordingsSectionProps) {
+export function RecordingsSection({ recordings, isVisible, className = "", onRecordingHover, stickiedGraphLineId, onRecordingClick, activeSection }: RecordingsSectionProps) {
   const [playingRecording, setPlayingRecording] = useState<string | null>(null);
   const [hoveredControlId, setHoveredControlId] = useState<string | null>(null);
   const [expandedRecordingId, setExpandedRecordingId] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
   const [zoomLevel, setZoomLevel] = useState(MIN_ZOOM);
   const backImageRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [modalArtAspectRatio, setModalArtAspectRatio] = useState<string>('1 / 1'); // Default to square
 
   const [shouldRender, setShouldRender] = useState(isVisible);
   const [isHiding, setIsHiding] = useState(false);
@@ -93,6 +95,37 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
       currentAudio.src = ''; // Release the audio resource
     };
   }, []);
+
+  useEffect(() => {
+    if (expandedRecordingId) {
+      const currentExpandedRecording = recordings.find(rec => rec.id === expandedRecordingId);
+      if (!currentExpandedRecording) {
+        setModalArtAspectRatio('1 / 1'); // Reset if recording not found
+        return;
+      }
+
+      const imageUrl = isFlipped
+        ? (currentExpandedRecording.albumArtBack || placeholderAlbumBack)
+        : (currentExpandedRecording.albumArt || placeholderAlbumArt);
+
+      const img = new Image();
+      img.onload = () => {
+        if (img.naturalWidth && img.naturalHeight && img.naturalHeight > 0) {
+          setModalArtAspectRatio(`${img.naturalWidth} / ${img.naturalHeight}`);
+        } else {
+          setModalArtAspectRatio('1 / 1'); // Fallback if dimensions are zero or invalid
+        }
+      };
+      img.onerror = () => {
+        console.error("Error loading image for aspect ratio calculation:", imageUrl);
+        setModalArtAspectRatio('1 / 1'); // Fallback on error
+      };
+      img.src = imageUrl;
+
+    } else {
+      setModalArtAspectRatio('1 / 1'); // Reset when modal is closed
+    }
+  }, [expandedRecordingId, isFlipped, recordings, placeholderAlbumArt, placeholderAlbumBack]);
 
 
   // Magnifier Handlers
@@ -198,17 +231,26 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
     return null;
   }
 
+  // Log activeSection and recordings before rendering the list
+  console.log('[RecordingsSection] Props received - activeSection:', activeSection, 'isVisible:', isVisible);
+  
+  const filteredRecordings = recordings.filter(recording => {
+    if (!activeSection) return false; // If no active section, show nothing from this list
+    return recording.section === activeSection;
+  });
+  console.log('[RecordingsSection] Filtered recordings:', filteredRecordings);
+
+
   return (
     <div className={`recordings-section ${isHiding ? 'hiding' : ''} ${className}`}>
+
       <div className="recordings-grid">
         <div className="section-header">
           <h3>How have artists shaped this moment differently?</h3>
         </div>
         
         <div className="recordings-list">
-          {recordings
-            .filter(recording => recording.section === 'A') // Filter for section 'A'
-            .map((recording) => {
+          {filteredRecordings.map((recording) => {
             const isPlaying = playingRecording === recording.id;
             const isControlHovered = hoveredControlId === recording.id;
             const isStickied = stickiedGraphLineId === (recording.graphLineColor || recording.id);
@@ -229,7 +271,8 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
                 )}
                 <div
                   className="album-art-container"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent click from bubbling to parent card
                     setExpandedRecordingId(recording.id);
                     setIsFlipped(false); // Reset flip state when opening new art
                   }}
@@ -289,9 +332,11 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
 
         return (
           <div className="album-art-modal-overlay" onClick={() => setExpandedRecordingId(null)}>
+            {/* The modal-content div is kept for structure but will be styled to be transparent */}
             <div className="album-art-modal-content" onClick={(e) => e.stopPropagation()}>
               <div
                 className={`modal-art-flipper ${isFlipped ? 'flipped' : ''}`}
+                style={{ aspectRatio: modalArtAspectRatio }}
                 onClick={() => setIsFlipped(!isFlipped)} // Click art to flip
               >
                 <div className="modal-art-front">
@@ -331,14 +376,7 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
                   )}
                 </div>
               </div>
-              <div className="modal-controls">
-                <button onClick={(e) => { e.stopPropagation(); setIsFlipped(!isFlipped); }} className="modal-button">
-                  {isFlipped ? 'View Front' : 'View Back'}
-                </button>
-                <button onClick={() => setExpandedRecordingId(null)} className="modal-button close-button">
-                  Close
-                </button>
-              </div>
+              {/* Modal controls are removed as per the new design */}
             </div>
           </div>
         );

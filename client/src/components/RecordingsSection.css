@@ -14,7 +14,8 @@
   max-height: 1000px; /* Adjust based on typical max content height + padding. 1000px is a safe default. */
   transition: max-height 0.4s ease-in-out,
               padding-top 0.4s ease-in-out,
-              padding-bottom 0.4s ease-in-out;
+              padding-bottom 0.4s ease-in-out,
+              opacity 0.3s ease-out; /* Added for smooth fade in/out */
               /* border-width 0.4s ease-in-out; */ /* Transition for border-width removed */
 }
 
@@ -33,22 +34,33 @@
 @keyframes recordings-section-slide-up {
   from {
     opacity: 1;
-    transform: translateY(0) scaleY(1);
+    /* transform: translateY(0) scaleY(1); */ /* Removed transform */
   }
   to {
     opacity: 0;
-    transform: translateY(-20px) scaleY(0.95);
+    /* transform: translateY(-20px) scaleY(0.95); */ /* Removed transform */
   } /* Matches 'from' state of slide-down for transform */
 }
 
 .recordings-section.hiding {
-  animation: recordings-section-slide-up 0.4s ease-in forwards; /* For content opacity/transform */
+  /* animation: recordings-section-slide-up 0.3s ease-in forwards; */ /* Removed animation */
+  opacity: 0; /* Target opacity for hiding */
 
   /* For container collapse */
   max-height: 0;
   padding-top: 0;
   padding-bottom: 0;
   border-width: 0; /* Collapse all borders */
+
+  /*
+    Transitions:
+    - Opacity: 0.3s duration, 0.1s delay (starts quickly)
+    - Collapse (max-height, padding, border): 0.4s duration, 0.4s delay (starts after opacity fade completes)
+  */
+  transition-property: opacity, max-height, padding-top, padding-bottom, border-width;
+  transition-duration: 0.3s, 0.4s, 0.4s, 0.4s, 0.4s; /* opacity, then collapse properties */
+  transition-timing-function: ease-out, ease-in-out, ease-in-out, ease-in-out, ease-in-out;
+  transition-delay: 0.1s, 0.4s, 0.4s, 0.4s, 0.4s; /* opacity delay, then collapse delay */
 }
 
 .recordings-grid {
@@ -90,9 +102,9 @@
   background: #f9f9f9;
   border-radius: 12px;
   box-sizing: border-box; /* Added for consistent layout with border changes */
-  transition: all 0.3s ease; /* Will transition border-color, transform, box-shadow */
+  transition: opacity 0.3s ease-out, transform 0.8s ease, box-shadow 0.8s ease; /* Explicit opacity transition */
   position: relative;
-  animation: fade-in-up 0.5s ease-out; /* Animation for individual cards */
+  animation: fade-in-up 0.8s ease-out; /* Animation for individual cards */
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -168,7 +180,7 @@
   position: relative; /* For positioning the shine pseudo-element */
   opacity: 1; /* Initially visible */
   transform: translateY(-3px); /* Apply slight elevation by default */
-  transition: transform 0.3s ease, opacity 0.3s ease; /* Animate both properties */
+  transition: transform 0.6s ease, opacity 0.6s ease; /* Animate both properties */
   cursor: pointer; /* Indicate it's clickable for Phase 4 */
   box-shadow: 0 2px 4px rgba(32, 10, 15, 0.25);
 }
@@ -184,6 +196,11 @@
   transform: scale(0.8);
   /* The existing transition on .album-art-container will apply:
      transition: transform 0.3s ease, opacity 0.3s ease; */
+}
+/* Explicitly fade out recording cards when the section is hiding */
+.recordings-section.hiding .recording-card {
+  opacity: 0;
+  /* This should use the 'opacity 0.3s ease-out' transition from .recording-card */
 }
 
 .album-art-container::after {
@@ -201,7 +218,7 @@
     rgba(255, 255, 255, 0) 70%
   );
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.6s ease;
 }
 
 .album-art-container:hover::after {
@@ -333,12 +350,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0); /* Changed from 0.75 to 0 to remove dimming */
+  background: transparent; /* Ensure overlay is fully transparent */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000; /* Ensure it's on top */
-  animation: modal-fade-in 0.3s ease-out;
+  animation: modal-fade-in 0.6s ease-out;
+  cursor: pointer; /* Indicate clicking overlay closes it */
 }
 
 @keyframes modal-fade-in {
@@ -347,29 +365,29 @@
 }
 
 .album-art-modal-content {
-  background: #2c2517; /* Dark background for contrast */
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  background: transparent; /* Remove background from content wrapper */
+  padding: 0; /* Remove padding */
+  border-radius: 0; /* Remove border-radius */
+  box-shadow: none; /* Remove box-shadow */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  color: #f0eade; /* Light text color */
-  max-width: 90vw; /* Max width relative to viewport */
-  max-height: 90vh; /* Max height relative to viewport */
+  gap: 0; /* Remove gap */
+  max-width: 90vw;
+  max-height: 90vh;
+  cursor: default; /* Reset cursor for the content area */
 }
 
 .modal-art-flipper {
-  width: 90vw; /* Changed to 90% of viewport width */
-  /* Height will be set dynamically by an aspect ratio or based on content,
-     or we can set a max-height and let the image determine its height within that.
-     For now, let's make it square based on the new width. */
-  height: 90vw; /* Making it square for now, can be adjusted */
-  max-width: 600px; /* Added a max-width to prevent it from becoming too large on very wide screens */
-  max-height: 600px; /* Added a max-height to match max-width for a square aspect ratio */
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
   position: relative;
-  perspective: 1000px; /* For 3D effect */
+  perspective: 1000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer; /* Indicate art is clickable to flip */
 }
 
 .modal-art-front,
@@ -377,11 +395,11 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden; /* Hide the back of the element during flip */
-  transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1); /* Smooth flip animation */
-  border-radius: 8px;
-  overflow: hidden; /* Ensure image stays within rounded corners */
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  backface-visibility: hidden;
+  transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+  border-radius: 8px; /* Keep rounded corners for the art itself */
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3); /* Enhanced shadow for better visibility against transparent background */
 }
 
 .modal-art-front {
@@ -390,7 +408,7 @@
 
 .modal-art-back {
   transform: rotateY(180deg);
-  background-color: #3a3225; /* Placeholder background for back if image is missing */
+  background-color: #222; /* Darker fallback for back if image is missing, less distracting */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -409,40 +427,18 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
+  object-fit: contain;
+  border-radius: 8px; /* Match parent flipper sides */
+  max-width: 100%;
+  max-height: 100%;
 }
 
-.modal-controls {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.modal-button {
-  background-color: #8b2942;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: 'Source Sans Pro', sans-serif;
-  font-weight: 600;
-  transition: background-color 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.modal-button:hover {
-  background-color: #a1324d;
-}
-
-.modal-button.close-button {
-  background-color: #6b7280;
-}
-
-.modal-button.close-button:hover {
-  background-color: #808791;
-}
+/* Remove modal-controls and modal-button styles as they are no longer used */
+/* .modal-controls { ... } */
+/* .modal-button { ... } */
+/* .modal-button:hover { ... } */
+/* .modal-button.close-button { ... } */
+/* .modal-button.close-button:hover { ... } */
 /* Responsive Design */
 @media (max-width: 768px) {
   .recordings-list {
