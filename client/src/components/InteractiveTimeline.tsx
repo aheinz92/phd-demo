@@ -38,8 +38,8 @@ export function InteractiveTimeline({
   const VIEWBOX_HEIGHT = 172; // Prev height 184 - (20 - 8) = 172. Keeps bottom edge at 192.
 
   // Define climax areas (percentages)
-  const MAIN_CLIMAX_AREA = useMemo(() => ({ start: 44, end: 56, center: 50 }), []);
-  const SECONDARY_CLIMAX_AREA = useMemo(() => ({ start: 76, end: 84, center: 80 }), []);
+  const MAIN_CLIMAX_AREA = useMemo(() => ({ start: 41, end: 59, center: 50 }), []);
+  const SECONDARY_CLIMAX_AREA = useMemo(() => ({ start: 14, end: 26, center: 20 }), []);
 
 
   // Helper function to generate smooth variance paths with realistic interpretive differences
@@ -64,7 +64,7 @@ export function InteractiveTimeline({
     
     // Generate raw points first
     for (let i = 0; i <= numPoints; i++) {
-      const x = (width * i) / numPoints;
+      const x = width - ((width * i) / numPoints);
       const xPercent = (i / numPoints) * 100;
       
       // Calculate distance from both climax points
@@ -338,8 +338,8 @@ export function InteractiveTimeline({
   const playheadX = (timelineState.currentPosition / 100) * effectiveViewBoxWidth;
 
   const formatCurrentTime = (position: number) => {
-    const startSeconds = 3 * 60 + 25; // 3:25
-    const endSeconds = 4 * 60 + 17; // 4:17
+    const startSeconds = 0 * 60 + 53; // 0:53
+    const endSeconds = 5 * 60 + 38; // 5:38
     const currentSeconds = startSeconds + (position / 100) * (endSeconds - startSeconds);
     const minutes = Math.floor(currentSeconds / 60);
     const seconds = Math.floor(currentSeconds % 60);
@@ -359,17 +359,17 @@ export function InteractiveTimeline({
         {/* Subtle highlighting for climax areas - These will need adjustment based on effectiveViewBoxWidth */}
         {/* For now, let's use percentages of effectiveViewBoxWidth for x and width */}
         <rect
-          x={effectiveViewBoxWidth * 0.44} // Corresponds to 176/400
+          x={effectiveViewBoxWidth * 0.41} // Corresponds to 164/400 (new: 41%)
           y="0"
-          width={effectiveViewBoxWidth * 0.12} // Corresponds to 48/400
+          width={effectiveViewBoxWidth * 0.18} // Corresponds to 72/400 (new: 18%)
           height="172"
           fill="url(#mainClimaxGradient)"
           opacity="0.3"
         />
         <rect
-          x={effectiveViewBoxWidth * 0.76} // Corresponds to 304/400
+          x={effectiveViewBoxWidth * 0.14} // Corresponds to 56/400 (new: 14%)
           y="0"
-          width={effectiveViewBoxWidth * 0.08} // Corresponds to 32/400
+          width={effectiveViewBoxWidth * 0.12} // Corresponds to 48/400 (new: 12%)
           height="172"
           fill="url(#secondaryClimaxGradient)"
           opacity="0.25"
@@ -524,7 +524,7 @@ export function InteractiveTimeline({
             textAnchor="start" // Align text to the start (left)
             className="timeline-time-display" // Added class for styling
           >
-            3:25
+            0:53
           </text>
         )}
         {titleText && (
@@ -534,7 +534,7 @@ export function InteractiveTimeline({
             textAnchor="start" // Align text to the start (left)
             className="timeline-time-display" // Added class for styling
           >
-            4:17
+            5:38
           </text>
         )}
       </svg>

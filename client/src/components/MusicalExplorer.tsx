@@ -14,8 +14,8 @@ const pieceInfo: PieceInfo = {
   composer: "Rachmaninoff",
   title: "Piano Sonata No. 2",
   movement: "2nd Movement",
-  startTime: "3:25",
-  endTime: "4:17"
+  startTime: "0:53",
+  endTime: "5:38"
 };
 
 // Helper function to capitalize first letter
@@ -121,8 +121,8 @@ export function MusicalExplorer() {
   };
 
   const formatCurrentTime = (position: number) => {
-    const startSeconds = 3 * 60 + 25; // 3:25
-    const endSeconds = 4 * 60 + 17; // 4:17
+    const startSeconds = 0 * 60 + 53; // 0:53
+    const endSeconds = 5 * 60 + 38; // 5:38
     const currentSeconds = startSeconds + (position / 100) * (endSeconds - startSeconds);
     const minutes = Math.floor(currentSeconds / 60);
     const seconds = Math.floor(currentSeconds % 60);
