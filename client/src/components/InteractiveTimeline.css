@@ -52,7 +52,13 @@
   font-weight: 300;
   font-size: 0.65rem; /* Match static time display size */
   bottom: 0.4rem; /* Added based on task */
+  opacity: 1; /* Default opacity */
 }
+
+.playhead-time-text.faded-out {
+  opacity: 0;
+}
+
 .playhead-marker {
   color: #8b2942; /* Burgundy, same as playhead line and old circles */
   cursor: grab;
@@ -96,7 +102,7 @@
 /* Specific transition for elements moved with x attribute (like text and SVG icons) */
 .timeline-svg .playhead-group > .playhead-marker, /* SVG icon */
 .timeline-svg .playhead-group > .playhead-time-text { /* Text element */
-  transition-property: x;
-  transition-duration: 0.15s;
-  transition-timing-function: ease-out;
+  transition-property: x, opacity; /* Add opacity */
+  transition-duration: 0.15s, 0.3s; /* Duration for x, duration for opacity */
+  transition-timing-function: ease-out, ease-in-out; /* Timing for x, timing for opacity */
 }

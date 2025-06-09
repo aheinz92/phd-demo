@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { InteractiveTimeline } from './InteractiveTimeline';
 import { RecordingsSection } from './RecordingsSection';
 import { PieceInfo, Recording } from '@/types/music';
@@ -54,6 +54,11 @@ export function MusicalExplorer() {
   const [hoveredGraphLineId, setHoveredGraphLineId] = useState<string | null>(null);
   const [stickiedGraphLineId, setStickiedGraphLineId] = useState<string | null>(null);
   const [staffLines, setStaffLines] = useState<number[]>([]);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [playingAudioSection, setPlayingAudioSection] = useState<'A' | 'B' | null>(null);
+  const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null);
+  const [timelineShouldStopPlayback, setTimelineShouldStopPlayback] = useState<string | null>(null);
 
   // Generate staff lines for background
   useEffect(() => {
@@ -72,25 +77,57 @@ export function MusicalExplorer() {
     setCurrentPosition(position);
   };
 
-  const handleInteractionStart = (incomingActiveSection: 'A' | 'B' | null) => {
+  const handleInteractionStart = useCallback((incomingActiveSection: 'A' | 'B' | null) => {
     console.log('[MusicalExplorer] handleInteractionStart - incomingActiveSection:', incomingActiveSection);
     // setShowExploreHint(true); // Removed
     setRecordingsSectionVisible(incomingActiveSection !== null);
-    setActiveTimelineSection(incomingActiveSection); 
+    setActiveTimelineSection(incomingActiveSection);
     
     // Hide hint after 3 seconds - Removed
     // setTimeout(() => {
     //   setShowExploreHint(false);
     // }, 3000);
-  };
+  }, []); // No external dependencies from component scope
 
-  const handlePositionUpdate = (update: { position: number; activeSection: 'A' | 'B' | null }) => {
-    console.log('[MusicalExplorer] handlePositionUpdate - position:', update.position, 'activeSection:', update.activeSection);
+  const handlePositionUpdate = useCallback((update: { position: number; activeSection: 'A' | 'B' | null }) => {
+    console.log(`[MusicalExplorer] handlePositionUpdate: newActiveSection=${update.activeSection}, currentIsAudioPlaying=${isAudioPlaying}, currentPlayingAudioSection=${playingAudioSection}, currentPlayingRecId=${playingRecordingId}`);
     setCurrentPosition(update.position);
     setActiveTimelineSection(update.activeSection);
     // Update recordings visibility based on activeSection
     setRecordingsSectionVisible(update.activeSection !== null);
-  };
+
+    // Logic for Clicking Outside Active Section During Playback
+    if (isAudioPlaying && update.activeSection === null && playingAudioSection !== null) {
+      console.log(`[MusicalExplorer] INTERPRETING AS INTERRUPTION in handlePositionUpdate. Stopping playback for ${playingRecordingId}`);
+      setTimelineShouldStopPlayback(playingRecordingId);
+      setIsAudioPlaying(false);
+      setAudioDuration(0);
+      setPlayingRecordingId(null);
+      setPlayingAudioSection(null);
+    }
+  }, [isAudioPlaying, playingAudioSection, playingRecordingId]); // Dependencies for useCallback
+
+  const handlePlaybackChange = useCallback((isPlaying: boolean, duration: number, section: 'A' | 'B' | null, recordingId: string | null) => {
+    console.log(`[MusicalExplorer] handlePlaybackChange: isPlaying=${isPlaying}, duration=${duration}, section=${section}, recId=${recordingId}, currentTimelineStopProp=${timelineShouldStopPlayback}`);
+    setIsAudioPlaying(isPlaying);
+    setAudioDuration(duration);
+    setPlayingAudioSection(section);
+    setPlayingRecordingId(recordingId);
+    if (isPlaying) {
+      setActiveTimelineSection(section);
+    } else {
+      setTimelineShouldStopPlayback(null);
+    }
+  }, [timelineShouldStopPlayback]); // Added timelineShouldStopPlayback as it's read
+
+  const handleTimelinePlaybackInterruption = useCallback(() => {
+    console.log(`[MusicalExplorer] handleTimelinePlaybackInterruption called. Stopping playback for ${playingRecordingId}`);
+    setTimelineShouldStopPlayback(playingRecordingId);
+    setIsAudioPlaying(false);
+    setAudioDuration(0);
+    // playingAudioSection can remain as is, or be set to null.
+    setPlayingRecordingId(null);
+  }, [playingRecordingId]); // Dependencies for useCallback
 
   const handleRecordingHover = (graphLineId: string | null) => {
     setHoveredGraphLineId(graphLineId);
@@ -162,6 +199,10 @@ export function MusicalExplorer() {
               activeGraphLineId={stickiedGraphLineId ?? hoveredGraphLineId} // Prioritize stickied, then hovered
               className="mb-3"
               titleText="Interpretive Variance" // Pass the title text here
+              isAudioPlaying={isAudioPlaying}
+              audioDuration={audioDuration}
+              playingAudioSection={playingAudioSection}
+              onPlaybackInterruption={handleTimelinePlaybackInterruption}
             />
 
 
@@ -175,6 +216,8 @@ export function MusicalExplorer() {
             onRecordingHover={handleRecordingHover} // Pass hover handler to recordings section
             stickiedGraphLineId={stickiedGraphLineId} // Pass stickied ID
             onRecordingClick={handleRecordingClick} // Pass click handler
+            onPlaybackChange={handlePlaybackChange}
+            stopPlayback={timelineShouldStopPlayback}
           />
         </main>
       </div>

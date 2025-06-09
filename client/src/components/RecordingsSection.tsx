@@ -22,10 +22,19 @@ interface RecordingsSectionProps {
   onRecordingHover: (graphLineId: string | null) => void; // Callback for hover events
   stickiedGraphLineId?: string | null; // Optional: ID of the currently "stickied" card
   onRecordingClick?: (graphLineId: string) => void; // Optional: Callback for click events
+  onPlaybackChange?: (isPlaying: boolean, duration: number, section: 'A' | 'B' | null, recordingId: string | null) => void;
+  stopPlayback?: string | null;
 }
 
-export function RecordingsSection({ recordings, isVisible, className = "", onRecordingHover, stickiedGraphLineId, onRecordingClick, activeSection }: RecordingsSectionProps) {
+interface CurrentPlayingInfo {
+  id: string;
+  section: 'A' | 'B';
+  duration: number;
+}
+
+export function RecordingsSection({ recordings, isVisible, className = "", onRecordingHover, stickiedGraphLineId, onRecordingClick, activeSection, onPlaybackChange, stopPlayback }: RecordingsSectionProps) {
   const [playingRecording, setPlayingRecording] = useState<string | null>(null);
+  const [currentPlayingInfo, setCurrentPlayingInfo] = useState<CurrentPlayingInfo | null>(null);
   const [hoveredControlId, setHoveredControlId] = useState<string | null>(null);
   const [expandedRecordingId, setExpandedRecordingId] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
@@ -78,23 +87,58 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
     }
   }, [isFlipped]);
 
-  // Effect for audio player setup and cleanup
+  // Effect for audio player setup (create instance once) and unmount cleanup
   useEffect(() => {
     audioRef.current = new Audio();
+    const audioInstance = audioRef.current; // Capture instance for cleanup
+
+    return () => {
+      if (audioInstance) {
+        audioInstance.pause();
+        audioInstance.src = ''; // Release the audio resource
+      }
+    };
+  }, []); // Empty array: runs once on mount, cleans up on unmount
+
+  // Effect for 'ended' event listener management
+  useEffect(() => {
     const currentAudio = audioRef.current;
+    if (!currentAudio) return;
 
     const handleAudioEnded = () => {
-      setPlayingRecording(null);
+      console.log(`[RecordingsSection] handleAudioEnded: Audio finished for ${currentPlayingInfo?.id}.`);
+      setPlayingRecording(null); // Reset playing state
+      if (onPlaybackChange && currentPlayingInfo) {
+        // Notify parent that playback ended, pass relevant info
+        onPlaybackChange(false, 0, currentPlayingInfo.section, currentPlayingInfo.id);
+      }
+      setCurrentPlayingInfo(null); // Clear current playing info
     };
 
     currentAudio.addEventListener('ended', handleAudioEnded);
 
     return () => {
       currentAudio.removeEventListener('ended', handleAudioEnded);
-      currentAudio.pause();
-      currentAudio.src = ''; // Release the audio resource
     };
-  }, []);
+  }, [onPlaybackChange, currentPlayingInfo]); // Dependencies for the ended handler logic
+
+  // Effect to handle stopPlayback prop
+  useEffect(() => {
+    console.log(`[RecordingsSection] stopPlayback useEffect: stopPlaybackProp=${stopPlayback}, currentPlayingRecordingId=${playingRecording}, currentPlayingInfoId=${currentPlayingInfo?.id}`);
+    if (stopPlayback && currentPlayingInfo && stopPlayback === currentPlayingInfo.id) {
+      console.log(`[RecordingsSection] stopPlayback useEffect: PAUSING audio for ${currentPlayingInfo.id}`);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      if (onPlaybackChange) {
+        onPlaybackChange(false, 0, currentPlayingInfo.section, currentPlayingInfo.id);
+      }
+      setPlayingRecording(null);
+      setCurrentPlayingInfo(null);
+    }
+  }, [stopPlayback, playingRecording, currentPlayingInfo, onPlaybackChange]);
+
 
   useEffect(() => {
     if (expandedRecordingId) {
@@ -179,8 +223,8 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
   };
 
   const handleRecordingPlay = (recordingId: string) => {
-    console.log('[handleRecordingPlay] Clicked:', recordingId, 'Current playing:', playingRecording);
     const selectedRecording = recordings.find(r => r.id === recordingId);
+    console.log(`[RecordingsSection] handleRecordingPlay: Clicked recordingId=${recordingId}, currentPlayingRecordingId=${playingRecording}, currentPlayingInfoId=${currentPlayingInfo?.id}, audioSrc=${selectedRecording?.audioSnippet}`);
 
     if (!audioRef.current) {
       console.error("[handleRecordingPlay] audioRef.current is null! Cannot play audio.");
@@ -190,13 +234,16 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
 
     if (!selectedRecording || !selectedRecording.audioSnippet) {
       console.warn("[handleRecordingPlay] Audio snippet not found for recording:", recordingId, "Selected recording:", selectedRecording);
-      // Stop any currently playing audio if a button for a record without a snippet is clicked
       if (!currentAudio.paused) {
         console.log('[handleRecordingPlay] No snippet, stopping current audio if any.');
         currentAudio.pause();
         currentAudio.currentTime = 0;
+        if (onPlaybackChange && currentPlayingInfo) {
+          onPlaybackChange(false, 0, currentPlayingInfo.section, currentPlayingInfo.id);
+        }
       }
-      setPlayingRecording(null); // Ensure UI reflects no playback
+      setPlayingRecording(null);
+      setCurrentPlayingInfo(null);
       return;
     }
     console.log('[handleRecordingPlay] Audio snippet found:', selectedRecording.audioSnippet);
@@ -205,25 +252,84 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
       console.log('[handleRecordingPlay] Stopping and resetting current audio:', recordingId);
       currentAudio.pause();
       currentAudio.currentTime = 0;
+      if (onPlaybackChange && currentPlayingInfo) {
+        onPlaybackChange(false, 0, currentPlayingInfo.section, playingRecording);
+      }
       setPlayingRecording(null);
+      setCurrentPlayingInfo(null);
     } else {
       console.log('[handleRecordingPlay] Attempting to play new/different audio:', recordingId);
-      if (!currentAudio.paused) {
+      if (!currentAudio.paused && currentPlayingInfo) { // If something was playing, notify parent
         console.log('[handleRecordingPlay] Pausing previous audio first.');
         currentAudio.pause();
         currentAudio.currentTime = 0;
+        if (onPlaybackChange) {
+          onPlaybackChange(false, 0, currentPlayingInfo.section, currentPlayingInfo.id);
+        }
       }
       currentAudio.src = selectedRecording.audioSnippet;
       console.log('[handleRecordingPlay] Set audio src to:', currentAudio.src);
       
-      currentAudio.load(); // Explicitly call load after setting new src
-      currentAudio.play().then(() => {
-        console.log('[handleRecordingPlay] Playback started successfully for:', recordingId);
-        setPlayingRecording(recordingId);
-      }).catch(error => {
-        console.error("[handleRecordingPlay] Error playing audio for:", recordingId, error);
-        setPlayingRecording(null); // Reset if play fails
-      });
+      console.log(`[RecordingsSection] handleRecordingPlay: About to call play() for ${recordingId}. Src: ${currentAudio.src}`);
+      const playPromise = currentAudio.play();
+
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log('[handleRecordingPlay] Playback started successfully for:', recordingId);
+          setPlayingRecording(recordingId);
+          
+          const idToPlay = recordingId; // Capture recordingId for use in async handler
+          const handleLoadedMetadata = () => {
+            if (audioRef.current && audioRef.current.duration && isFinite(audioRef.current.duration)) {
+              const duration = audioRef.current.duration;
+              const rSection = selectedRecording.section;
+              console.log(`[RecordingsSection] loadedmetadata: Audio duration for ${idToPlay} is ${audioRef.current.duration}. Calling onPlaybackChange.`);
+
+              if (rSection) { // rSection is 'A' | 'B'
+                setCurrentPlayingInfo({ id: idToPlay, section: rSection, duration });
+                if (onPlaybackChange) {
+                  onPlaybackChange(true, duration, rSection, idToPlay);
+                }
+              } else {
+                console.error(`Recording ${idToPlay} is missing a 'section' property. Playback started, but internal state for section might be incomplete.`);
+                if (onPlaybackChange) {
+                  onPlaybackChange(true, duration, null, idToPlay);
+                }
+              }
+            }
+            currentAudio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+          };
+
+          if (audioRef.current && audioRef.current.duration && isFinite(audioRef.current.duration)) {
+            const duration = audioRef.current.duration;
+            const rSection = selectedRecording.section;
+            console.log(`[RecordingsSection] loadedmetadata (immediate): Audio duration for ${idToPlay} is ${duration}. Calling onPlaybackChange.`);
+
+            if (rSection) { // rSection is 'A' | 'B'
+              setCurrentPlayingInfo({ id: idToPlay, section: rSection, duration });
+              if (onPlaybackChange) {
+                onPlaybackChange(true, duration, rSection, idToPlay);
+              }
+            } else {
+              console.error(`Recording ${idToPlay} is missing a 'section' property. Playback started, but internal state for section might be incomplete.`);
+              if (onPlaybackChange) {
+                onPlaybackChange(true, duration, null, idToPlay);
+              }
+            }
+          } else {
+            currentAudio.addEventListener('loadedmetadata', handleLoadedMetadata);
+          }
+        }).catch(error => {
+          console.error(`[RecordingsSection] handleRecordingPlay: Error playing audio for ${recordingId}. Error: ${error.name} - ${error.message}`, error);
+          setPlayingRecording(null);
+          setCurrentPlayingInfo(null);
+          if (onPlaybackChange) { // Notify parent about failed playback attempt
+            const rSection = selectedRecording.section;
+            const sectionForCallback = rSection ?? null;
+            onPlaybackChange(false, 0, sectionForCallback, recordingId);
+          }
+        });
+      }
     }
   };
 

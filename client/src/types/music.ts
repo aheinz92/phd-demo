@@ -29,6 +29,8 @@ export interface TimelineState {
   hasInteracted: boolean;
   isRecordingsSectionVisible: boolean;
 activeTimelineSection?: 'A' | 'B' | null; // Added to track which timeline highlight is active
+  isAnimatingPlayhead?: boolean; // Added to track if playhead is currently auto-animating
+  animationPhase?: 'idle' | 'teleportingToStart' | 'starting' | 'running' | 'stopping'; // For managing animation sequence
 }
 
 export interface PieceInfo {
