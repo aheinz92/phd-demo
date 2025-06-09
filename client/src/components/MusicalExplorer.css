@@ -1,0 +1,8 @@
+.musical-explorer-background {
+  /* Lighter beige/gold gradient, with custom angle and color stops */
+  background-image: linear-gradient(195deg,
+    rgb(253, 247, 238) 0%,       /* Start color at the beginning */
+    rgba(238, 238, 238, 0.966) 40%, /* Midpoint color reached at 30% */
+    rgba(231, 224, 210, 0.95) 85% /* End color at the end */
+  );
+}

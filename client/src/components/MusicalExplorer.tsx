@@ -4,7 +4,7 @@ import { RecordingsSection } from './RecordingsSection';
 import { PieceInfo, Recording } from '@/types/music';
 import { sectionAClips, sectionBClips } from '../data/recordingClips'; // Import the new data
 import { RecordingClip } from '../types/music'; // Import RecordingClip type
-
+import './MusicalExplorer.css'; // Import the new CSS file
 // Define colors
 
 const pieceInfo: PieceInfo = {
@@ -78,7 +78,6 @@ export function MusicalExplorer() {
   };
 
   const handleInteractionStart = useCallback((incomingActiveSection: 'A' | 'B' | null) => {
-    console.log('[MusicalExplorer] handleInteractionStart - incomingActiveSection:', incomingActiveSection);
     // setShowExploreHint(true); // Removed
     setRecordingsSectionVisible(incomingActiveSection !== null);
     setActiveTimelineSection(incomingActiveSection);
@@ -90,7 +89,6 @@ export function MusicalExplorer() {
   }, []); // No external dependencies from component scope
 
   const handlePositionUpdate = useCallback((update: { position: number; activeSection: 'A' | 'B' | null }) => {
-    console.log(`[MusicalExplorer] handlePositionUpdate: newActiveSection=${update.activeSection}, currentIsAudioPlaying=${isAudioPlaying}, currentPlayingAudioSection=${playingAudioSection}, currentPlayingRecId=${playingRecordingId}`);
     setCurrentPosition(update.position);
     setActiveTimelineSection(update.activeSection);
     // Update recordings visibility based on activeSection
@@ -98,7 +96,6 @@ export function MusicalExplorer() {
 
     // Logic for Clicking Outside Active Section During Playback
     if (isAudioPlaying && update.activeSection === null && playingAudioSection !== null) {
-      console.log(`[MusicalExplorer] INTERPRETING AS INTERRUPTION in handlePositionUpdate. Stopping playback for ${playingRecordingId}`);
       setTimelineShouldStopPlayback(playingRecordingId);
       setIsAudioPlaying(false);
       setAudioDuration(0);
@@ -108,7 +105,6 @@ export function MusicalExplorer() {
   }, [isAudioPlaying, playingAudioSection, playingRecordingId]); // Dependencies for useCallback
 
   const handlePlaybackChange = useCallback((isPlaying: boolean, duration: number, section: 'A' | 'B' | null, recordingId: string | null) => {
-    console.log(`[MusicalExplorer] handlePlaybackChange: isPlaying=${isPlaying}, duration=${duration}, section=${section}, recId=${recordingId}, currentTimelineStopProp=${timelineShouldStopPlayback}`);
     setIsAudioPlaying(isPlaying);
     setAudioDuration(duration);
     setPlayingAudioSection(section);
@@ -121,7 +117,6 @@ export function MusicalExplorer() {
   }, [timelineShouldStopPlayback]); // Added timelineShouldStopPlayback as it's read
 
   const handleTimelinePlaybackInterruption = useCallback(() => {
-    console.log(`[MusicalExplorer] handleTimelinePlaybackInterruption called. Stopping playback for ${playingRecordingId}`);
     setTimelineShouldStopPlayback(playingRecordingId);
     setIsAudioPlaying(false);
     setAudioDuration(0);
@@ -149,20 +144,9 @@ export function MusicalExplorer() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-stone-100 to-stone-200 flex justify-center p-2 md:p-4"> {/* Changed amber-50 to stone-100 */}
-      {/* Background Staff Lines */}
-      <div className="staff-background">
-        {staffLines.map((top, index) => (
-          <div
-            key={index}
-            className="staff-line"
-            style={{ top: `${top}px` }}
-          />
-        ))}
-      </div>
-
+    <>
       {/* Main Container - Optimized for narrow columns */}
-      <div className="w-full max-w-3xl glass-effect rounded-2xl shadow-medium overflow-hidden animate-fade-in-up bg-gradient-to-b from-stone-100/95 via-stone-200/90 to-stone-300/95"> {/* Added vertical gradient, ensured high alpha for glass effect */}
+      <div className="w-full max-w-3xl shadow-music-explorer-full-container sglass-effect rounded-2xl overflow-hidden animate-fade-in-up musical-explorer-background"> {/* Replaced Tailwind gradient with CSS class */}
         {/* Header - More compact */}
         <header className="p-2 md:p-3 pt-3 md:pt-5 text-center relative ornament"> {/* Removed background gradient and border */}
           <div className="font-sans-custom text-xs uppercase tracking-[2px] text-red-900 font-semibold mb-3 mt-2 opacity-50">
@@ -179,7 +163,7 @@ export function MusicalExplorer() {
                 {pieceInfo.title}
               </span>
               <span className="text-red-900 font-bold text-sm mx-5">  </span>
-              <span className="font-display text-3xl text-stone-500 opacity-80">
+              <span className="font-display text-3xl text-stone-500 opacity-85">
                 {pieceInfo.movement}
               </span>
             </div>
@@ -221,6 +205,8 @@ export function MusicalExplorer() {
           />
         </main>
       </div>
-    </div>
+    </>
   );
 }
+
+export default MusicalExplorer;

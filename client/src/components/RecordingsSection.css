@@ -12,11 +12,10 @@
   /* For container height transition */
   overflow: hidden; /* Crucial for max-height */
   max-height: 1000px; /* Adjust based on typical max content height + padding. 1000px is a safe default. */
-  transition: max-height 0.4s ease-in-out,
-              padding-top 0.4s ease-in-out,
-              padding-bottom 0.4s ease-in-out,
-              opacity 0.3s ease-out; /* Added for smooth fade in/out */
-              /* border-width 0.4s ease-in-out; */ /* Transition for border-width removed */
+  transition-property: opacity, max-height, padding-top, padding-bottom, border-width;
+  transition-duration: 0.4s; /* All properties animate over 0.4s */
+  transition-timing-function: ease-in; /* A single timing function for all */
+  transition-delay: 0s; /* No delay, all start at the same time */
 }
 
 /* Renamed keyframes to be specific to this component */
@@ -43,7 +42,6 @@
 }
 
 .recordings-section.hiding {
-  /* animation: recordings-section-slide-up 0.3s ease-in forwards; */ /* Removed animation */
   opacity: 0; /* Target opacity for hiding */
 
   /* For container collapse */
@@ -52,15 +50,11 @@
   padding-bottom: 0;
   border-width: 0; /* Collapse all borders */
 
-  /*
-    Transitions:
-    - Opacity: 0.3s duration, 0.1s delay (starts quickly)
-    - Collapse (max-height, padding, border): 0.4s duration, 0.4s delay (starts after opacity fade completes)
-  */
+  /* Simplified simultaneous transitions over 0.4s */
   transition-property: opacity, max-height, padding-top, padding-bottom, border-width;
-  transition-duration: 0.3s, 0.4s, 0.4s, 0.4s, 0.4s; /* opacity, then collapse properties */
-  transition-timing-function: ease-out, ease-in-out, ease-in-out, ease-in-out, ease-in-out;
-  transition-delay: 0.1s, 0.4s, 0.4s, 0.4s, 0.4s; /* opacity delay, then collapse delay */
+  transition-duration: 0.4s; /* All properties animate over 0.4s */
+  transition-timing-function: ease-in; /* A single timing function for all */
+  transition-delay: 0s; /* No delay, all start at the same time */
 }
 
 .recordings-grid {
@@ -79,6 +73,8 @@
   color: #2c2517;
   font-style: italic;
   letter-spacing: 0.03em;
+  padding: 0; /* Added padding for better spacing */
+  margin: 0;
 }
 
 .section-header p {
@@ -102,9 +98,9 @@
   background: #f9f9f9;
   border-radius: 12px;
   box-sizing: border-box; /* Added for consistent layout with border changes */
-  transition: opacity 0.3s ease-out, transform 0.8s ease, box-shadow 0.8s ease; /* Explicit opacity transition */
+  transition: opacity 0.3s ease-in, transform 0.8s ease-in, box-shadow 0.8s ease-in; /* Explicit opacity transition */
   position: relative;
-  animation: fade-in-up 0.8s ease-out; /* Animation for individual cards */
+  animation: fade-in-up 0.8s ease-in; /* Animation for individual cards */
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 

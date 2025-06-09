@@ -50,7 +50,7 @@
   fill: #8b2942; /* Burgundy for playhead elements */
   font-family: 'Roboto Flex', sans-serif;
   font-weight: 300;
-  font-size: 0.65rem; /* Match static time display size */
+  font-size: 0.58rem; /* Match static time display size */
   bottom: 0.4rem; /* Added based on task */
   opacity: 1; /* Default opacity */
 }
@@ -103,6 +103,6 @@
 .timeline-svg .playhead-group > .playhead-marker, /* SVG icon */
 .timeline-svg .playhead-group > .playhead-time-text { /* Text element */
   transition-property: x, opacity; /* Add opacity */
-  transition-duration: 0.15s, 0.3s; /* Duration for x, duration for opacity */
+  transition-duration: 0.15s, 0.6s; /* Duration for x, duration for opacity */
   transition-timing-function: ease-out, ease-in-out; /* Timing for x, timing for opacity */
 }

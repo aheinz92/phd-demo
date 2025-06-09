@@ -137,7 +137,7 @@ const isAudioPlayingPropRef = useRef(isAudioPlaying);
 
   const updatePlayheadPosition = useCallback((clientX: number) => {
     if (timelineStateRef.current.isAnimatingPlayhead) { // Use ref for current state in callback
-      console.log('[InteractiveTimeline] User interaction during animation. Interrupting playback and resetting animation.');
+      
       onPlaybackInterruption?.();
 
       // Clear all animation-related timeouts
@@ -159,8 +159,7 @@ const isAudioPlayingPropRef = useRef(isAudioPlaying);
         playheadGroupRef.current.style.transitionProperty = 'none';
         playheadGroupRef.current.style.transitionDuration = '0s';
         playheadGroupRef.current.style.transitionTimingFunction = '';
-        // playheadGroupRef.current.style.transform = ''; // Optional: Reset transform if needed, but new position should override
-        console.log('[InteractiveTimeline] Resetting playheadGroupRef transition styles due to interruption.');
+        // playheadGroupRef.current.style.transform = ''; // Optional: Reset transform if needed, but new position should override 
       }
 
       // Force animation state to idle and stop animation
@@ -171,7 +170,6 @@ const isAudioPlayingPropRef = useRef(isAudioPlaying);
       }));
     } else if (isAudioPlayingPropRef.current) {
       // If not animating but audio is playing according to props, user interaction should still interrupt.
-      console.log('[InteractiveTimeline] User interaction while audio is playing (but timeline not animating). Interrupting playback.');
       onPlaybackInterruption?.();
       // No need to change animationPhase here as it should already be idle or not relevant.
     }
@@ -218,7 +216,6 @@ const isAudioPlayingPropRef = useRef(isAudioPlaying);
     } else if (percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end) {
       activeSection = 'B';
     }
-    console.log(`[InteractiveTimeline] updatePlayheadPosition: Calculated percentage=${percentage}, newActiveSection=${activeSection}. IsAnimating=${timelineStateRef.current.isAnimatingPlayhead}, currentPos=${timelineStateRef.current.currentPosition}`);
     onPositionChange({ position: percentage, activeSection });
 
     const newIsRecordingsSectionVisible = activeSection !== null;
@@ -289,7 +286,6 @@ const isAudioPlayingPropRef = useRef(isAudioPlaying);
         activeTimelineSection: activeSectionOnSnap,
         hasInteracted: prev.hasInteracted || shouldCallInteractionStartFlag,
       }));
-      console.log(`[InteractiveTimeline] handleInteractionEnd: FinalPosition=${finalPosition}, ActiveSectionOnSnap=${activeSectionOnSnap}, DroppedPosition=${droppedPosition}`);
       onPositionChange({ position: finalPosition, activeSection: activeSectionOnSnap });
     } else {
       setTimelineState(prev => ({
@@ -298,7 +294,6 @@ const isAudioPlayingPropRef = useRef(isAudioPlaying);
         activeTimelineSection: null,
         isRecordingsSectionVisible: false
       }));
-      console.log(`[InteractiveTimeline] handleInteractionEnd (no snap): DroppedPosition=${droppedPosition}, ActiveSection=null`);
       onPositionChange({ position: droppedPosition, activeSection: null });
     }
   }, [onPositionChange, onInteractionStart, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
@@ -423,7 +418,6 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     } else {
       // Audio is not playing, or parameters are invalid. If an animation is running, transition to 'stopping'.
       if (timelineState.isAnimatingPlayhead && timelineState.animationPhase !== 'stopping' && timelineState.animationPhase !== 'idle') {
-        console.log(`[InteractiveTimeline] Audio stopped or params invalid. Phase: ${timelineState.animationPhase} -> stopping.`);
         setTimelineState(prev => ({ ...prev, animationPhase: 'stopping' }));
       }
     }
@@ -445,7 +439,6 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         playheadGroupRef.current.style.transitionDuration = '';
         playheadGroupRef.current.style.transitionTimingFunction = '';
         playheadGroupRef.current.style.transform = ''; // Reset transform
-        console.log('[InteractiveTimeline] Animation styles reset on playheadGroupRef.');
       }
       if (resetPhaseToIdle) {
         setTimelineState(prev => ({ ...prev, isAnimatingPlayhead: false, animationPhase: 'idle' }));
@@ -455,7 +448,6 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     if (timelineState.animationPhase === 'teleportingToStart') {
       const targetSectionDetails = playingAudioSection === 'A' ? SECONDARY_CLIMAX_AREA : MAIN_CLIMAX_AREA;
       if (playheadGroupRef.current && playheadGroupRef.current.style && targetSectionDetails) {
-        console.log('[InteractiveTimeline] Phase: teleportingToStart. Forcing playhead to start position without transition.');
         // Remove transition to ensure immediate jump
         playheadGroupRef.current.style.transitionProperty = 'none';
         playheadGroupRef.current.style.transitionDuration = '0s';
@@ -464,7 +456,6 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         // but we ensure the transform is applied directly for this "teleport"
         const initialX = (targetSectionDetails.start / 100) * effectiveViewBoxWidth;
         playheadGroupRef.current.style.transform = `translateX(${initialX}px)`;
-        console.log(`[InteractiveTimeline] Directly set transform to: translateX(${initialX}px)`);
 
         // Force a reflow after direct style manipulation
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -473,7 +464,6 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         if (teleportTimeoutRef.current) clearTimeout(teleportTimeoutRef.current);
         teleportTimeoutRef.current = setTimeout(() => {
           if (timelineStateRef.current.isAnimatingPlayhead && timelineStateRef.current.animationPhase === 'teleportingToStart') {
-            console.log('[InteractiveTimeline] Phase: teleportingToStart -> starting (after 0ms delay and forced jump)');
             setTimelineState(prev => ({ ...prev, animationPhase: 'starting' }));
           } else {
             console.log('[InteractiveTimeline] Teleport timeout: Animation no longer in "teleportingToStart" or not animating. Aborting transition to "starting".');
@@ -485,21 +475,17 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
       }
     } else if (timelineState.animationPhase === 'starting') {
       const targetSectionDetails = playingAudioSection === 'A' ? SECONDARY_CLIMAX_AREA : MAIN_CLIMAX_AREA;
-      console.log(`[InteractiveTimeline] Phase: starting. Applying transition styles. Target: ${playingAudioSection} (start: ${targetSectionDetails?.start}, end: ${targetSectionDetails?.end}), Duration: ${audioDuration}s`);
       
       if (playheadGroupRef.current && playheadGroupRef.current.style && targetSectionDetails && audioDuration > 0) {
         playheadGroupRef.current.style.transitionProperty = 'transform';
         playheadGroupRef.current.style.transitionDuration = `${audioDuration}s`;
         playheadGroupRef.current.style.transitionTimingFunction = 'linear';
         
-        console.log(`[InteractiveTimeline] Applied transform transition styles to playheadGroupRef for duration: ${audioDuration}s.`);
-        
         if (animationTriggerTimeoutRef.current) clearTimeout(animationTriggerTimeoutRef.current);
         animationTriggerTimeoutRef.current = setTimeout(() => {
           // Check ref for isAnimatingPlayhead, as state might be stale in timeout
           const currentPhaseFromRef = timelineStateRef.current.animationPhase;
           const isAnimatingFromRef = timelineStateRef.current.isAnimatingPlayhead;
-          console.log(`[InteractiveTimeline] animationTriggerTimeout (100ms) FIRED. Ref state: isAnimatingPlayhead=${isAnimatingFromRef}, animationPhase=${currentPhaseFromRef}. Target end: ${targetSectionDetails.end}`);
 
           if (isAnimatingFromRef && currentPhaseFromRef === 'starting') {
             // Force a reflow to try and ensure styles are applied before animation starts
@@ -507,11 +493,9 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
               // Accessing getBBox() can trigger a reflow for SVG elements
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const _ = playheadGroupRef.current.getBBox(); // Force reflow
-              console.log('[InteractiveTimeline] Trigger timeout: Forced reflow via getBBox() read.');
             }
             // The state update to animatedPlayheadPosition will cause playheadX to update,
             // which in turn updates the transform style on playheadGroupRef, triggering the animation.
-            console.log('[InteractiveTimeline] Phase: starting -> running (triggering animation by setting animatedPlayheadPosition to end)');
             setAnimatedPlayheadPosition(targetSectionDetails.end);
             setTimelineState(prev => ({ ...prev, animationPhase: 'running' }));
           } else {
@@ -536,13 +520,10 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
       if (isAudioPlaying && audioDuration > 0) {
         const delay = audioDuration * 1000 + 50;
         const timeoutSetAt = Date.now();
-        console.log(`[InteractiveTimeline] Setting animationEndTimeoutRef with calculated delay: ${delay}ms (from audioDuration: ${audioDuration}s). Set at: ${timeoutSetAt}`);
         animationEndTimeoutRef.current = setTimeout(() => {
           const timeoutFiredAt = Date.now();
-          console.log(`[InteractiveTimeline] animationEndTimeoutRef CALLBACK. Fired at: ${timeoutFiredAt} (elapsed: ${timeoutFiredAt - timeoutSetAt}ms). Expected delay: ${delay}ms.`);
           // Check ref to ensure still in 'running' phase and animating (not interrupted by audio stopping or user interaction)
           if (timelineStateRef.current.isAnimatingPlayhead && timelineStateRef.current.animationPhase === 'running') {
-            console.log('[InteractiveTimeline] Phase: running -> stopping (animation duration naturally elapsed)');
             setTimelineState(prev => ({ ...prev, animationPhase: 'stopping' }));
           } else {
              console.log(`[InteractiveTimeline] End timeout: Animation no longer in "running" phase (current phase: ${timelineStateRef.current.animationPhase}, isAnimating: ${timelineStateRef.current.isAnimatingPlayhead}). Aborting natural end.`);
@@ -552,7 +533,6 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         console.log('[InteractiveTimeline] Phase: running, but audio stopped or duration invalid. Not setting new end timeout. Expecting transition to stopping phase soon via audio watcher useEffect.');
       }
     } else if (timelineState.animationPhase === 'stopping') {
-      console.log('[InteractiveTimeline] Phase: stopping. Cleaning up animation.');
       cleanupTimeoutsAndStyles(); // Clear timeouts and reset styles first
 
       const snapToCenterAfterStop = !isAudioPlaying; // Only snap if audio has truly stopped (not just interrupted by user drag)
@@ -560,7 +540,6 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
       if (snapToCenterAfterStop && sectionThatWasPlaying) {
         const targetSection = sectionThatWasPlaying === 'A' ? SECONDARY_CLIMAX_AREA : MAIN_CLIMAX_AREA;
-        console.log(`[InteractiveTimeline] Snapping to center of section ${sectionThatWasPlaying} after stopping.`);
         setTimelineState(prev => ({
           ...prev,
           currentPosition: targetSection.center,
@@ -581,7 +560,7 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
       // If unmounting mid-animation, ensure timeouts are cleared.
       // console.log(`[InteractiveTimeline] Phase Manager useEffect CLEANUP for phase: ${timelineStateRef.current.animationPhase}`);
       // cleanupTimeoutsAndStyles(); // This might be too aggressive if phase changes are part of the flow.
-                                 // The individual phase logic should handle its own timeout cleanup.
+      // The individual phase logic should handle its own timeout cleanup.
     };
   }, [timelineState.animationPhase, audioDuration, playingAudioSection, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA, onPositionChange, isAudioPlaying]);
 
@@ -732,7 +711,7 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
           
           <text
             x="0"
-            y="38"
+            y="34.5"
             textAnchor="middle"
             className={`playhead-time-text ${
               isAudioPlaying && timelineState.isAnimatingPlayhead && !timelineState.isDragging ? 'faded-out' : ''

@@ -224,7 +224,6 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
 
   const handleRecordingPlay = (recordingId: string) => {
     const selectedRecording = recordings.find(r => r.id === recordingId);
-    console.log(`[RecordingsSection] handleRecordingPlay: Clicked recordingId=${recordingId}, currentPlayingRecordingId=${playingRecording}, currentPlayingInfoId=${currentPlayingInfo?.id}, audioSrc=${selectedRecording?.audioSnippet}`);
 
     if (!audioRef.current) {
       console.error("[handleRecordingPlay] audioRef.current is null! Cannot play audio.");
@@ -275,7 +274,6 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
 
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          console.log('[handleRecordingPlay] Playback started successfully for:', recordingId);
           setPlayingRecording(recordingId);
           
           const idToPlay = recordingId; // Capture recordingId for use in async handler
@@ -283,7 +281,6 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
             if (audioRef.current && audioRef.current.duration && isFinite(audioRef.current.duration)) {
               const duration = audioRef.current.duration;
               const rSection = selectedRecording.section;
-              console.log(`[RecordingsSection] loadedmetadata: Audio duration for ${idToPlay} is ${audioRef.current.duration}. Calling onPlaybackChange.`);
 
               if (rSection) { // rSection is 'A' | 'B'
                 setCurrentPlayingInfo({ id: idToPlay, section: rSection, duration });
@@ -336,16 +333,11 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
   if (!shouldRender && !isHiding) { // Only return null if fully hidden and not in the process of hiding
     return null;
   }
-
-  // Log activeSection and recordings before rendering the list
-  console.log('[RecordingsSection] Props received - activeSection:', activeSection, 'isVisible:', isVisible);
   
   const filteredRecordings = recordings.filter(recording => {
     if (!activeSection) return false; // If no active section, show nothing from this list
     return recording.section === activeSection;
   });
-  console.log('[RecordingsSection] Filtered recordings:', filteredRecordings);
-
 
   return (
     <div className={`recordings-section ${isHiding ? 'hiding' : ''} ${className}`}>

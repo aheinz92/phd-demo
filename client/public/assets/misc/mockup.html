@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musical Explorer Mockup</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap');
+
+        :root {
+          /* Custom musical theme colors */
+          --parchment: 42 13% 97%; /* #f9f6f0 */
+          --ink: 31 17% 17%; /* #2c2517 */
+          --sepia: 41 30% 70%; /* #d4c7aa */
+          --accent: 342 51% 40%; /* #8b2942 */
+          --light-accent: 338 29% 94%; /* #f0e6e8 */
+          --staff-line: 39 14% 68%; /* #b3ada3 */
+          --ornament-color: 41 30% 70%; /* #d4c7aa */
+          --shadow-subtle: 31 17% 17% / 0.1; /* rgba(44, 37, 23, 0.1) */
+          --shadow-medium: 31 17% 17% / 0.15; /* rgba(44, 37, 23, 0.15) */
+          --glass: 42 13% 97% / 0.95; /* rgba(249, 246, 240, 0.95) */
+
+          /* Override default shadcn colors to match theme */
+          --background: var(--parchment);
+          --foreground: var(--ink);
+          --muted: 41 30% 85%;
+          --muted-foreground: var(--ink);
+          --popover: var(--parchment);
+          --popover-foreground: var(--ink);
+          --card: var(--parchment);
+          --card-foreground: var(--ink);
+          --border: var(--sepia);
+          --input: var(--sepia);
+          --primary: var(--accent);
+          --primary-foreground: var(--parchment);
+          --secondary: var(--light-accent);
+          --secondary-foreground: var(--ink);
+          /* --accent is already defined, using the theme's --accent */
+          /* --accent: var(--light-accent); */ /* This was in index.css, but conflicts. Theme accent is likely intended. */
+          --accent-foreground: var(--ink);
+          --destructive: 0 84% 60%;
+          --destructive-foreground: var(--parchment);
+          --ring: var(--accent);
+          --radius: 0.75rem;
+        }
+
+        /* Basic reset and body styles (approximating Tailwind base) */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            border-width: 0;
+            border-style: solid;
+            border-color: hsl(var(--border)); /* from @apply border-border */
+        }
+
+        html {
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+            tab-size: 4;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+
+        body {
+            margin: 0;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: 'Lora', serif;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .font-sans-custom {
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+
+        /* Custom utility classes */
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: hsl(var(--glass));
+        }
+
+        .shadow-subtle {
+            box-shadow: 0 8px 32px hsl(var(--shadow-subtle));
+        }
+
+        .shadow-medium {
+            box-shadow: 0 12px 48px hsl(var(--shadow-medium));
+        }
+
+        /* Staff lines background */
+        .staff-background {
+            position: fixed;
+            height: 100vh;
+            width: 100vw;
+            top: 0;
+            left: 0;
+            z-index: -2;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+
+        .staff-line {
+            position: absolute;
+            height: 1px;
+            width: 100%;
+            background-color: hsl(var(--staff-line));
+        }
+
+        /* Animation utilities */
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .animate-reveal {
+            animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-stagger-in {
+            /* This will be applied inline for delay */
+            animation-name: staggerIn;
+            animation-duration: 0.4s;
+            animation-timing-function: ease-out;
+            animation-fill-mode: forwards;
+            opacity: 0; /* Start hidden for stagger */
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes reveal {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes staggerIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+
+        /* SVG interaction styles */
+        .timeline-svg {
+            cursor: crosshair;
+        }
+
+        .timeline-svg .playhead-group {
+            transition: all 0.2s ease;
+        }
+
+        .timeline-svg .playhead-group:hover {
+            filter: drop-shadow(0 0 8px hsl(var(--accent) / 0.4));
+        }
+
+        .timeline-svg .playhead-hitarea {
+            cursor: grab;
+        }
+
+        .timeline-svg .playhead-hitarea:active {
+            cursor: grabbing;
+        }
+
+        /* Musical ornament styles */
+        .ornament::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, hsl(var(--accent)), transparent);
+            border-radius: 2px;
+        }
+
+        /* Tailwind class approximations */
+        .min-h-screen { min-height: 100vh; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .p-2 { padding: 0.5rem; }
+        .p-3 { padding: 0.75rem; }
+        .p-4 { padding: 1rem; }
+        .md\:p-4 { /* Use media queries for responsive padding if needed, simplified for now */ }
+        .md\:p-6 { /* Use media queries for responsive padding if needed, simplified for now */ }
+        .md\:p-5 { padding: 1.25rem; } /* Simplified */
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .w-full { width: 100%; }
+        .max-w-3xl { max-width: 48rem; }
+        .border { border-width: 1px; }
+        .border-b { border-bottom-width: 1px; }
+        .border-amber-200\/60 { border-color: rgba(245, 158, 11, 0.6); } /* Approximating amber-200 */
+        .border-amber-200\/40 { border-color: rgba(245, 158, 11, 0.4); } /* Approximating amber-200 */
+        .border-amber-200 { border-color: #F59E0B; } /* Approximating amber-200 */
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-full { border-radius: 9999px; }
+        .overflow-hidden { overflow: hidden; }
+        .text-center { text-align: center; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .bottom-0 { bottom: 0; }
+        .left-0 { left: 0; }
+        .right-0 { right: 0; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .md\:text-3xl { /* Simplified */ font-size: 1.875rem; line-height: 2.25rem; }
+        .lg\:text-4xl { /* Simplified */ font-size: 2.25rem; line-height: 2.5rem; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .font-medium { font-weight: 500; }
+        .italic { font-style: italic; }
+        .uppercase { text-transform: uppercase; }
+        .tracking-\[2px\] { letter-spacing: 2px; }
+        .tracking-wider { letter-spacing: 0.05em; }
+        .text-red-900 { color: #7f1d1d; } /* Approximating */
+        .text-stone-800 { color: #292524; } /* Approximating */
+        .text-stone-700 { color: #44403c; } /* Approximating */
+        .text-stone-600 { color: #57534e; } /* Approximating */
+        .text-stone-500 { color: #78716c; } /* Approximating */
+        .opacity-80 { opacity: 0.8; }
+        .opacity-70 { opacity: 0.7; }
+        .opacity-100 { opacity: 1; }
+        .opacity-0 { opacity: 0; }
+        .transition-opacity { transition-property: opacity; }
+        .transition-all { transition-property: all; }
+        .duration-300 { transition-duration: 300ms; }
+        .duration-500 { transition-duration: 500ms; }
+        .ease-out { transition-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        .gap-1\.5 { gap: 0.375rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .w-3 { width: 0.75rem; }
+        .h-3 { height: 0.75rem; }
+        .w-1\.5 { width: 0.375rem; }
+        .h-1\.5 { height: 0.375rem; }
+        .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
+        .from-amber-50 { --tw-gradient-from: #fffbeb; --tw-gradient-to: rgba(255, 251, 235, 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+        .to-stone-100 { --tw-gradient-to: #f5f5f4; }
+        .bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
+        .from-amber-50\/90 { --tw-gradient-from: rgba(255, 251, 235, 0.9); --tw-gradient-to: rgba(255, 251, 235, 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+        .to-stone-50\/90 { --tw-gradient-to: rgba(250, 250, 249, 0.9); }
+        .bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
+        .from-transparent { --tw-gradient-from: transparent; --tw-gradient-to: rgba(0,0,0,0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+        .to-red-950\/5 { --tw-gradient-to: rgba(60, 13, 20, 0.05); } /* Approximating red-950 */
+        .bg-gradient-to-t { background-image: linear-gradient(to top, var(--tw-gradient-stops)); }
+        .from-amber-50\/90 { /* already defined */ }
+        .to-transparent { /* already defined */ }
+        .from-red-900 { --tw-gradient-from: #7f1d1d; --tw-gradient-to: rgba(127,29,29,0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+        .to-amber-600 { --tw-gradient-to: #d97706; }
+        .flex-col { flex-direction: column; }
+        .sm\:flex-row { /* Simplified: apply flex-row always */ flex-direction: row; }
+        .sm\:items-center { /* Simplified: apply items-center always */ align-items: center; }
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .md\:grid-cols-3 { /* Simplified */ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .lg\:grid-cols-6 { /* Simplified */ grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        .group:hover .group-hover\:scale-105 { transform: scale(1.05); }
+        .hover\:-translate-y-1:hover { transform: translateY(-0.25rem); }
+        .hover\:shadow-md:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+        .w-16 { width: 4rem; }
+        .h-16 { height: 4rem; }
+        .leading-tight { line-height: 1.25; }
+        .w-6 { width: 1.5rem; }
+        .h-0\.5 { height: 0.125rem; }
+        .h-7 { height: 1.75rem; }
+        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .mr-1\.5 { margin-right: 0.375rem; }
+        .w-2 { width: 0.5rem; }
+        .h-2 { height: 0.5rem; }
+        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+        .from-white\/15 { --tw-gradient-from: rgba(255,255,255,0.15); --tw-gradient-to: rgba(255,255,255,0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+        .pointer-events-none { pointer-events: none; }
+        .scale-100 { transform: scale(1); }
+        .scale-98 { transform: scale(0.98); }
+        .translate-y-0 { transform: translateY(0); }
+        .translate-y-4 { transform: translateY(1rem); }
+
+        /* Button base style (very simplified) */
+        button {
+            cursor: pointer;
+            background-color: transparent;
+            padding: 0.5em 1em;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 to-stone-100">
+
+    <div class="min-h-screen flex items-center justify-center p-2 md:p-4">
+      <!-- Background Staff Lines -->
+      <div class="staff-background">
+        <div class="staff-line" style="top: 100px;"></div>
+        <div class="staff-line" style="top: 140px;"></div>
+        <div class="staff-line" style="top: 180px;"></div>
+        <div class="staff-line" style="top: 220px;"></div>
+        <div class="staff-line" style="top: 260px;"></div>
+        <div class="staff-line" style="top: 300px;"></div>
+        <div class="staff-line" style="top: 340px;"></div>
+        <div class="staff-line" style="top: 380px;"></div>
+        <div class="staff-line" style="top: 420px;"></div>
+        <div class="staff-line" style="top: 460px;"></div>
+      </div>
+
+      <!-- Main Container -->
+      <div class="w-full max-w-3xl glass-effect border border-amber-200/60 rounded-2xl shadow-medium overflow-hidden animate-fade-in-up">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-amber-50/90 to-stone-50/90 p-4 md:p-6 text-center border-b border-amber-200 relative ornament">
+          <div class="font-sans-custom text-xs uppercase tracking-[2px] text-red-900 font-semibold mb-2">
+            Currently Exploring
+          </div>
+          <h1 class="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-stone-800 mb-1">
+            Rachmaninoff
+          </h1>
+          <div class="font-display text-lg md:text-xl italic text-red-900 mb-1">
+            Piano Sonata No. 2
+          </div>
+          <div class="font-sans-custom text-sm md:text-base text-stone-700 opacity-80">
+            2nd Movement
+          </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="p-4 md:p-6">
+          <!-- Variance Graph Section -->
+          <section class="glass-effect border border-amber-200/40 rounded-xl p-4 md:p-5 mb-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+              <h2 class="font-display text-lg md:text-xl font-semibold text-stone-800">
+                Interpretive Variance
+              </h2>
+              <div class="font-sans-custom text-xs text-red-900 font-medium transition-opacity duration-300 flex items-center gap-1.5 opacity-100">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                Drag to explore this moment
+              </div>
+            </div>
+
+            <!-- InteractiveTimeline -->
+            <div class="relative h-64 bg-gradient-to-b from-transparent to-red-950/5 rounded-xl border border-amber-200/30 overflow-hidden mb-3">
+              <svg
+                class="w-full h-full timeline-svg"
+                viewBox="0 0 400 200"
+                preserveAspectRatio="none"
+              >
+                <rect x="176" y="0" width="48" height="180" fill="url(#mainClimaxGradient)" opacity="0.15" rx="4" />
+                <rect x="304" y="0" width="32" height="180" fill="url(#secondaryClimaxGradient)" opacity="0.1" rx="4" />
+                
+                <defs>
+                  <linearGradient id="mainClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#8b2942" stopOpacity="0.2"/>
+                    <stop offset="50%" stopColor="#8b2942" stopOpacity="0.4"/>
+                    <stop offset="100%" stopColor="#8b2942" stopOpacity="0.1"/>
+                  </linearGradient>
+                  <linearGradient id="secondaryClimaxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#b8860b" stopOpacity="0.15"/>
+                    <stop offset="50%" stopColor="#b8860b" stopOpacity="0.3"/>
+                    <stop offset="100%" stopColor="#b8860b" stopOpacity="0.1"/>
+                  </linearGradient>
+                </defs>
+                
+                <path d="M0,172 L400,172" stroke="#666" fill="none" strokeWidth="3" opacity="0.5"/>
+                
+                <!-- Placeholder SVG Paths. Actual paths are JS-generated and more complex. -->
+                <path d="M0,170 Q50,150 100,160 T200,80 T300,150 Q350,160 400,170" stroke="#d63384" fill="none" strokeWidth="1.5" opacity="0.75" />
+                <path d="M0,170 Q60,145 120,155 T200,90 T280,160 Q340,150 400,170" stroke="#b8860b" fill="none" strokeWidth="1.5" opacity="0.75" />
+                <path d="M0,170 Q70,155 140,165 T200,120 T260,165 Q330,160 400,170" stroke="#2e8b57" fill="none" strokeWidth="1.5" opacity="0.75" />
+                <path d="M0,170 Q80,160 130,150 T200,100 T270,145 Q350,155 400,170" stroke="#8b4513" fill="none" strokeWidth="1.5" opacity="0.75" />
+                <path d="M0,170 Q55,152 110,160 T200,95 T290,150 Q360,160 400,170" stroke="#4169e1" fill="none" strokeWidth="1.5" opacity="0.75" />
+                <path d="M0,170 Q65,158 125,165 T200,110 T285,155 Q345,165 400,170" stroke="#9932cc" fill="none" strokeWidth="1.5" opacity="0.75" />
+                
+                <g class="playhead-group">
+                  <line x1="200" y1="8" x2="200" y2="174" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeDasharray="4,2" />
+                  <circle cx="200" cy="172" r="6" fill="hsl(var(--accent))" stroke="hsl(var(--parchment))" strokeWidth="2" />
+                  <circle cx="200" cy="8" r="4" fill="hsl(var(--accent))" opacity="0.7" />
+                  <rect x="182" y="178" width="36" height="16" fill="hsl(var(--accent))" rx="8" opacity="0.9" />
+                  <text x="200" y="188" textAnchor="middle" fontSize="10" fill="white" fontFamily="Source Sans Pro, sans-serif" fontWeight="600">
+                    3:51
+                  </text>
+                  <rect x="192" y="0" width="16" height="180" fill="transparent" class="playhead-hitarea" />
+                </g>
+              </svg>
+              
+              <div class="absolute bottom-0 left-0 right-0 flex justify-between px-3 font-sans-custom text-xs text-stone-600 opacity-70 h-6 items-center bg-gradient-to-t from-amber-50/90 to-transparent">
+                <span>3:25</span>
+                <span>4:17</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- RecordingsSection -->
+          <div class="transition-all duration-500 ease-out opacity-100 translate-y-0 scale-100">
+            <div class="glass-effect border border-amber-200/40 rounded-xl p-4 shadow-medium">
+              <div class="flex items-center gap-2 mb-4">
+                <div class="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-red-900 to-amber-600 animate-pulse"></div>
+                <span class="font-sans-custom text-xs uppercase tracking-wider text-stone-700 font-semibold">
+                  Climax Section Recordings
+                </span>
+              </div>
+              
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <!-- Rubinstein -->
+                <div class="text-center group animate-stagger-in" style="animation-delay: 0ms;">
+                  <div class="p-3 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md border" style="border-color: #d63384; background-color: #d6338406;">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-lg flex items-center justify-center relative overflow-hidden shadow-sm border" style="border-color: #d63384; background: linear-gradient(135deg, #d6338412, #d6338404);">
+                      <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
+                      <div class="text-xl relative z-10" style="color: #d63384;">♪</div>
+                    </div>
+                    <h3 class="font-display text-sm font-semibold text-stone-800 mb-1 group-hover:scale-105 transition-transform leading-tight">Arthur Rubinstein</h3>
+                    <div class="font-sans-custom text-xs text-stone-600 mb-3 font-medium">1937</div>
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
+                      <div class="w-6 h-0.5 rounded-full" style="background-color: #d63384;"></div>
+                      <span class="font-sans-custom text-xs text-stone-500 uppercase tracking-wide">Match</span>
+                    </div>
+                    <button class="font-sans-custom text-xs transition-all duration-200 hover:scale-105 border h-7 px-3" style="border-color: #d63384; color: #d63384;">
+                      <svg class="w-2.5 h-2.5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Listen
+                    </button>
+                  </div>
+                </div>
+                <!-- Horowitz -->
+                <div class="text-center group animate-stagger-in" style="animation-delay: 150ms;">
+                  <div class="p-3 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md border" style="border-color: #b8860b; background-color: #b8860b06;">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-lg flex items-center justify-center relative overflow-hidden shadow-sm border" style="border-color: #b8860b; background: linear-gradient(135deg, #b8860b12, #b8860b04);">
+                      <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
+                      <div class="text-xl relative z-10" style="color: #b8860b;">♪</div>
+                    </div>
+                    <h3 class="font-display text-sm font-semibold text-stone-800 mb-1 group-hover:scale-105 transition-transform leading-tight">Vladimir Horowitz</h3>
+                    <div class="font-sans-custom text-xs text-stone-600 mb-3 font-medium">1957</div>
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
+                      <div class="w-6 h-0.5 rounded-full" style="background-color: #b8860b;"></div>
+                      <span class="font-sans-custom text-xs text-stone-500 uppercase tracking-wide">Match</span>
+                    </div>
+                    <button class="font-sans-custom text-xs transition-all duration-200 hover:scale-105 border h-7 px-3" style="border-color: #b8860b; color: #b8860b;">
+                      <svg class="w-2.5 h-2.5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Listen
+                    </button>
+                  </div>
+                </div>
+                <!-- Pires -->
+                <div class="text-center group animate-stagger-in" style="animation-delay: 300ms;">
+                  <div class="p-3 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md border" style="border-color: #2e8b57; background-color: #2e8b5706;">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-lg flex items-center justify-center relative overflow-hidden shadow-sm border" style="border-color: #2e8b57; background: linear-gradient(135deg, #2e8b5712, #2e8b5704);">
+                      <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
+                      <div class="text-xl relative z-10" style="color: #2e8b57;">♪</div>
+                    </div>
+                    <h3 class="font-display text-sm font-semibold text-stone-800 mb-1 group-hover:scale-105 transition-transform leading-tight">Maria João Pires</h3>
+                    <div class="font-sans-custom text-xs text-stone-600 mb-3 font-medium">1996</div>
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
+                      <div class="w-6 h-0.5 rounded-full" style="background-color: #2e8b57;"></div>
+                      <span class="font-sans-custom text-xs text-stone-500 uppercase tracking-wide">Match</span>
+                    </div>
+                    <button class="font-sans-custom text-xs transition-all duration-200 hover:scale-105 border h-7 px-3" style="border-color: #2e8b57; color: #2e8b57;">
+                      <svg class="w-2.5 h-2.5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Listen
+                    </button>
+                  </div>
+                </div>
+                <!-- Richter -->
+                <div class="text-center group animate-stagger-in" style="animation-delay: 450ms;">
+                  <div class="p-3 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md border" style="border-color: #8b4513; background-color: #8b451306;">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-lg flex items-center justify-center relative overflow-hidden shadow-sm border" style="border-color: #8b4513; background: linear-gradient(135deg, #8b451312, #8b451304);">
+                      <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
+                      <div class="text-xl relative z-10" style="color: #8b4513;">♪</div>
+                    </div>
+                    <h3 class="font-display text-sm font-semibold text-stone-800 mb-1 group-hover:scale-105 transition-transform leading-tight">Sviatoslav Richter</h3>
+                    <div class="font-sans-custom text-xs text-stone-600 mb-3 font-medium">1971</div>
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
+                      <div class="w-6 h-0.5 rounded-full" style="background-color: #8b4513;"></div>
+                      <span class="font-sans-custom text-xs text-stone-500 uppercase tracking-wide">Match</span>
+                    </div>
+                    <button class="font-sans-custom text-xs transition-all duration-200 hover:scale-105 border h-7 px-3" style="border-color: #8b4513; color: #8b4513;">
+                      <svg class="w-2.5 h-2.5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Listen
+                    </button>
+                  </div>
+                </div>
+                <!-- Pollini -->
+                <div class="text-center group animate-stagger-in" style="animation-delay: 600ms;">
+                  <div class="p-3 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md border" style="border-color: #4169e1; background-color: #4169e106;">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-lg flex items-center justify-center relative overflow-hidden shadow-sm border" style="border-color: #4169e1; background: linear-gradient(135deg, #4169e112, #4169e104);">
+                      <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
+                      <div class="text-xl relative z-10" style="color: #4169e1;">♪</div>
+                    </div>
+                    <h3 class="font-display text-sm font-semibold text-stone-800 mb-1 group-hover:scale-105 transition-transform leading-tight">Maurizio Pollini</h3>
+                    <div class="font-sans-custom text-xs text-stone-600 mb-3 font-medium">1989</div>
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
+                      <div class="w-6 h-0.5 rounded-full" style="background-color: #4169e1;"></div>
+                      <span class="font-sans-custom text-xs text-stone-500 uppercase tracking-wide">Match</span>
+                    </div>
+                    <button class="font-sans-custom text-xs transition-all duration-200 hover:scale-105 border h-7 px-3" style="border-color: #4169e1; color: #4169e1;">
+                      <svg class="w-2.5 h-2.5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Listen
+                    </button>
+                  </div>
+                </div>
+                <!-- Ashkenazy -->
+                <div class="text-center group animate-stagger-in" style="animation-delay: 750ms;">
+                  <div class="p-3 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-md border" style="border-color: #9932cc; background-color: #9932cc06;">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-lg flex items-center justify-center relative overflow-hidden shadow-sm border" style="border-color: #9932cc; background: linear-gradient(135deg, #9932cc12, #9932cc04);">
+                      <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
+                      <div class="text-xl relative z-10" style="color: #9932cc;">♪</div>
+                    </div>
+                    <h3 class="font-display text-sm font-semibold text-stone-800 mb-1 group-hover:scale-105 transition-transform leading-tight">Vladimir Ashkenazy</h3>
+                    <div class="font-sans-custom text-xs text-stone-600 mb-3 font-medium">1982</div>
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
+                      <div class="w-6 h-0.5 rounded-full" style="background-color: #9932cc;"></div>
+                      <span class="font-sans-custom text-xs text-stone-500 uppercase tracking-wide">Match</span>
+                    </div>
+                    <button class="font-sans-custom text-xs transition-all duration-200 hover:scale-105 border h-7 px-3" style="border-color: #9932cc; color: #9932cc;">
+                      <svg class="w-2.5 h-2.5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Listen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+</body>
+</html>
