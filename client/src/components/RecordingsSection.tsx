@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, Square } from 'lucide-react';
 import './RecordingsSection.css'; // Ensure this CSS file is correctly named and placed
-import placeholderAlbumArt from '../assets/images/front_horowitz_rachmaninoff_rca_1.jpg';
-import placeholderAlbumBack from '../assets/images/back_ogdon_rachmaninoff_rca_1.jpg';
+// Changed from direct imports to string paths for files in public directory
+const placeholderAlbumArt = "/assets/images/front_horowitz_rachmaninoff_rca_1.jpg";
+const placeholderAlbumBack = "/assets/images/back_ogdon_rachmaninoff_rca_1.jpg";
 
-// Example audio imports - you'll need to ensure your 'recordings' data uses these or similar paths
-import alkanSonataExcerpt from '../assets/audio/alkanSonata8XFugue_excerpt.mp3';
-import rachConcerto2Excerpt from '../assets/audio/rachconcerto2opening_excerpt.mp3';
-import rachSonataClimaxExcerpt from '../assets/audio/rachsonata2climax_excerpt.mp3';
-import scriabinOp11Excerpt from '../assets/audio/scriabinOp11no13choir.mp3';
+// Example audio imports - these are likely unused if audioSnippet is sourced from recordingClips.ts
+// import alkanSonataExcerpt from '../assets/audio/alkanSonata8XFugue_excerpt.mp3';
+// import rachConcerto2Excerpt from '../assets/audio/rachconcerto2opening_excerpt.mp3';
+// import rachSonataClimaxExcerpt from '../assets/audio/rachsonata2climax_excerpt.mp3';
+// import scriabinOp11Excerpt from '../assets/audio/scriabinOp11no13choir.mp3';
 
 
 import { Recording } from '../types/music';
@@ -205,7 +206,9 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
         </div>
         
         <div className="recordings-list">
-          {recordings.map((recording) => {
+          {recordings
+            .filter(recording => recording.section === 'A') // Filter for section 'A'
+            .map((recording) => {
             const isPlaying = playingRecording === recording.id;
             const isControlHovered = hoveredControlId === recording.id;
             const isStickied = stickiedGraphLineId === (recording.graphLineColor || recording.id);

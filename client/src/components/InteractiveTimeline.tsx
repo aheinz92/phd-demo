@@ -183,43 +183,25 @@ export function InteractiveTimeline({
     const clampedX = Math.max(padding, Math.min(newViewBoxWidth - padding, currentSvgX));
     const percentage = newViewBoxWidth > 0 ? (clampedX / newViewBoxWidth) * 100 : 0;
     
+    onPositionChange(percentage);
+
+    const newIsRecordingsSectionVisible = (percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end) ||
+                                      (percentage > SECONDARY_CLIMAX_AREA.start && percentage < SECONDARY_CLIMAX_AREA.end);
+
+    const previousState = timelineStateRef.current; // State before this update sequence
+    let shouldCallInteractionStartFlag = false;
+
+    if (newIsRecordingsSectionVisible && !previousState.isRecordingsSectionVisible && !previousState.hasInteracted) {
+      onInteractionStart(); // Call before setTimelineState
+      shouldCallInteractionStartFlag = true; // To update local hasInteracted state
+    }
+
     setTimelineState(prev => ({
       ...prev,
-      currentPosition: percentage
+      currentPosition: percentage,
+      isRecordingsSectionVisible: newIsRecordingsSectionVisible,
+      hasInteracted: prev.hasInteracted || shouldCallInteractionStartFlag,
     }));
-    
-    onPositionChange(percentage);
-    
-    setTimelineState(prev => {
-      const isInMainClimaxArea = percentage > MAIN_CLIMAX_AREA.start && percentage < MAIN_CLIMAX_AREA.end;
-      const isInSecondaryClimaxArea = percentage > SECONDARY_CLIMAX_AREA.start && percentage < SECONDARY_CLIMAX_AREA.end;
-      const isInAnyClimaxArea = isInMainClimaxArea || isInSecondaryClimaxArea;
-
-      let newHasInteracted = prev.hasInteracted;
-      let newIsRecordingsSectionVisible = prev.isRecordingsSectionVisible;
-      let shouldCallOnInteractionStart = false;
-
-      if (isInAnyClimaxArea && !prev.isRecordingsSectionVisible) { // Becoming visible
-        if (!prev.hasInteracted) { // First time interaction leading to visibility
-           shouldCallOnInteractionStart = true;
-        }
-        newHasInteracted = true;
-        newIsRecordingsSectionVisible = true;
-      } else if (!isInAnyClimaxArea && prev.isRecordingsSectionVisible) { // Becoming hidden
-        newIsRecordingsSectionVisible = false;
-      }
-      
-      if (shouldCallOnInteractionStart) {
-          onInteractionStart();
-      }
-
-      return {
-        ...prev,
-        currentPosition: percentage,
-        hasInteracted: newHasInteracted,
-        isRecordingsSectionVisible: newIsRecordingsSectionVisible,
-      };
-    });
   }, [onPositionChange, onInteractionStart, effectiveViewBoxWidth, MAIN_CLIMAX_AREA, SECONDARY_CLIMAX_AREA]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -239,10 +221,10 @@ export function InteractiveTimeline({
   }, [updatePlayheadPosition]); // timelineState.isDragging is accessed via timelineStateRef in the effect
 
   const handleInteractionEnd = useCallback(() => {
-    const currentTimelineState = timelineStateRef.current;
-    if (!currentTimelineState.isDragging) return;
+    const previousState = timelineStateRef.current; // State before this interaction end logic
+    if (!previousState.isDragging) return;
 
-    const { currentPosition: droppedPosition, isRecordingsSectionVisible: prevIsVisible, hasInteracted: prevHasInteracted } = currentTimelineState;
+    const { currentPosition: droppedPosition } = previousState;
 
     let snapToPercentage: number | null = null;
     if (droppedPosition > MAIN_CLIMAX_AREA.start && droppedPosition < MAIN_CLIMAX_AREA.end) {
@@ -253,28 +235,21 @@ export function InteractiveTimeline({
 
     if (snapToPercentage !== null) {
       const finalPosition = snapToPercentage;
-
-      const finalIsInMain = finalPosition > MAIN_CLIMAX_AREA.start && finalPosition < MAIN_CLIMAX_AREA.end;
-      const finalIsInSecondary = finalPosition > SECONDARY_CLIMAX_AREA.start && finalPosition < SECONDARY_CLIMAX_AREA.end;
-      const finalIsInAny = finalIsInMain || finalIsInSecondary;
-
-      let shouldCallOnInteractionStart = false;
-      if (finalIsInAny && !prevIsVisible) {
-          if (!prevHasInteracted) {
-              shouldCallOnInteractionStart = true;
-          }
-      }
+      const newIsRecordingsSectionVisible = (finalPosition > MAIN_CLIMAX_AREA.start && finalPosition < MAIN_CLIMAX_AREA.end) ||
+                                          (finalPosition > SECONDARY_CLIMAX_AREA.start && finalPosition < SECONDARY_CLIMAX_AREA.end);
       
-      if (shouldCallOnInteractionStart) {
-          onInteractionStart();
+      let shouldCallInteractionStartFlag = false;
+      if (newIsRecordingsSectionVisible && !previousState.isRecordingsSectionVisible && !previousState.hasInteracted) {
+        onInteractionStart(); // Call before setTimelineState
+        shouldCallInteractionStartFlag = true;
       }
 
       setTimelineState(prev => ({
         ...prev,
         isDragging: false,
         currentPosition: finalPosition,
-        isRecordingsSectionVisible: finalIsInAny,
-        hasInteracted: prev.hasInteracted || finalIsInAny,
+        isRecordingsSectionVisible: newIsRecordingsSectionVisible,
+        hasInteracted: prev.hasInteracted || shouldCallInteractionStartFlag,
       }));
       onPositionChange(finalPosition);
     } else {

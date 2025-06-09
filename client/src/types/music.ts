@@ -8,6 +8,7 @@ export interface Recording {
   albumArtBack?: string; // Added for back cover image
   audioSnippet?: string;
   recordLabel?: string;
+  section?: 'A' | 'B'; // Added to distinguish sections
 }
 
 export interface VariancePoint {

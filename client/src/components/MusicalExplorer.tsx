@@ -2,18 +2,13 @@ import { useState, useEffect } from 'react';
 import { InteractiveTimeline } from './InteractiveTimeline';
 import { RecordingsSection } from './RecordingsSection';
 import { PieceInfo, Recording } from '@/types/music';
+import { sectionAClips, sectionBClips } from '../data/recordingClips'; // Import the new data
+import { RecordingClip } from '../types/music'; // Import RecordingClip type
 
-// Audio Imports
-import alkanSonataExcerpt from '../assets/audio/alkanSonata8XFugue_excerpt.mp3';
-import rachConcerto2Excerpt from '../assets/audio/rachconcerto2opening_excerpt.mp3';
-import rachConcerto3Excerpt from '../assets/audio/rachconcerto3midcadenza_excerpt.mp3';
-import rachSonataClimaxExcerpt from '../assets/audio/rachsonata2climax_excerpt.mp3';
-import rachSonataOpeningExcerpt from '../assets/audio/rachsonata2opening_excerpt.mp3';
-import reubkeSonataExcerpt from '../assets/audio/reubkeSonata_excerpt.mp3';
-import scriabinOp11Excerpt from '../assets/audio/scriabinOp11no13choir.mp3';
-import scriabinOp45no1ChoirExcerpt from '../assets/audio/scriabinOp45no1choir.mp3';
-import scriabinOp45no1OriginalExcerpt from '../assets/audio/scriabinOp45no1original.mp3';
-
+// Define colors
+const HOROWITZ_COLOR = "#57534e";
+const TITOVA_COLOR = "#d63384"; // Previously Rubinstein's color
+const OTHER_COLORS = ["#2e8b57", "#8b4513", "#4169e1", "#9932cc"];
 
 const pieceInfo: PieceInfo = {
   composer: "Rachmaninoff",
@@ -23,64 +18,53 @@ const pieceInfo: PieceInfo = {
   endTime: "4:17"
 };
 
-const recordings: Recording[] = [
-  {
-    id: "rubinstein-1937",
-    artistName: "Arthur Rubinstein",
-    recordingYear: 1937,
-    colorCode: "#d63384",
-    graphLineColor: "#d63384",
-    recordLabel: "RCA Victor",
-    audioSnippet: rachSonataClimaxExcerpt
-  },
-  {
-    id: "horowitz-1957",
-    artistName: "Vladimir Horowitz",
-    recordingYear: 1957,
-    colorCode: "#57534e", // Changed from #b8860b (gold) to stone-600 (gray)
-    graphLineColor: "#57534e", // Changed from #b8860b (gold) to stone-600 (gray)
-    recordLabel: "RCA Red Seal",
-    audioSnippet: rachConcerto2Excerpt
-  },
-  {
-    id: "pires-1996",
-    artistName: "Maria João Pires",
-    recordingYear: 1996,
-    colorCode: "#2e8b57",
-    graphLineColor: "#2e8b57",
-    recordLabel: "Deutsche Grammophon",
-    audioSnippet: alkanSonataExcerpt
-  },
-  {
-    id: "richter-1971",
-    artistName: "Sviatoslav Richter",
-    recordingYear: 1971,
-    colorCode: "#8b4513",
-    graphLineColor: "#8b4513",
-    audioSnippet: scriabinOp11Excerpt
-    // No record label for this one, to test conditional rendering
-  },
-  {
-    id: "pollini-1989",
-    artistName: "Maurizio Pollini",
-    recordingYear: 1989,
-    colorCode: "#4169e1",
-    graphLineColor: "#4169e1",
-    recordLabel: "Deutsche Grammophon",
-    audioSnippet: reubkeSonataExcerpt
-  },
-  {
-    id: "ashkenazy-1982",
-    artistName: "Vladimir Ashkenazy",
-    recordingYear: 1982,
-    colorCode: "#9932cc",
-    graphLineColor: "#9932cc",
-    recordLabel: "Decca",
-    audioSnippet: rachSonataOpeningExcerpt
+// Helper function to capitalize first letter
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// Helper function to transform RecordingClip to Recording
+const transformClipToRecording = (clip: RecordingClip, color: string): Recording => ({
+  id: clip.id,
+  artistName: capitalize(clip.pianistLastName), // Use capitalized last name
+  recordingYear: clip.year,
+  colorCode: color,
+  graphLineColor: color,
+  recordLabel: capitalize(clip.recordLabel),
+  audioSnippet: clip.audioSrc, // Use the audio path string
+  albumArt: clip.frontArtSrc,
+  albumArtBack: clip.backArtSrc,
+  section: clip.section,
+});
+
+// Process clips and assign colors
+const processClips = (clips: RecordingClip[]): Recording[] => {
+  const horowitzClip = clips.find(clip => clip.pianistLastName.toLowerCase() === 'horowitz');
+  const titovaClip = clips.find(clip => clip.pianistLastName.toLowerCase() === 'titova');
+  const otherClips = clips.filter(
+    clip => clip.pianistLastName.toLowerCase() !== 'horowitz' && clip.pianistLastName.toLowerCase() !== 'titova'
+  );
+
+  const processed: Recording[] = [];
+  let otherColorIndex = 0;
+
+  if (horowitzClip) {
+    processed.push(transformClipToRecording(horowitzClip, HOROWITZ_COLOR));
   }
-  // You can add more recordings and assign scriabinOp45no1ChoirExcerpt,
-  // scriabinOp45no1OriginalExcerpt, and rachConcerto3Excerpt if you have more entries.
-];
+  if (titovaClip) {
+    processed.push(transformClipToRecording(titovaClip, TITOVA_COLOR));
+  }
+  otherClips.forEach(clip => {
+    processed.push(transformClipToRecording(clip, OTHER_COLORS[otherColorIndex % OTHER_COLORS.length]));
+    otherColorIndex++;
+  });
+  return processed;
+};
+
+const recordingsA = processClips(sectionAClips);
+const recordingsB = processClips(sectionBClips);
+
+// Combine recordings: A section (Horowitz, Titova, others), then B section (Horowitz, Titova, others)
+const recordings: Recording[] = [...recordingsA, ...recordingsB];
+
 
 export function MusicalExplorer() {
   const [currentPosition, setCurrentPosition] = useState(30);
@@ -94,7 +78,7 @@ export function MusicalExplorer() {
   useEffect(() => {
     const generateStaffLines = () => {
       const lineCount = Math.floor(window.innerHeight / 40);
-      const lines = Array.from({ length: lineCount }, (_, i) => i * 40 + 100);9
+      const lines = Array.from({ length: lineCount }, (_, i) => i * 40 + 100);
       setStaffLines(lines);
     };
 
