@@ -1,6 +1,7 @@
 export interface Recording {
   id: string;
-  artistName: string;
+  artistFirstName: string; // Added
+  artistLastName: string; // Renamed from artistName
   recordingYear: number;
   colorCode: string;
   graphLineColor?: string; // Added for graph line matching
@@ -9,6 +10,7 @@ export interface Recording {
   audioSnippet?: string;
   recordLabel?: string;
   section?: 'A' | 'B'; // Added to distinguish sections
+  isLive: boolean; // Added
 }
 
 export interface VariancePoint {
@@ -38,6 +40,7 @@ export interface PieceInfo {
 
 export interface RecordingClip {
   id: string;
+  pianistFirstName: string; // Added
   pianistLastName: string;
   section: 'A' | 'B';
   year: number;

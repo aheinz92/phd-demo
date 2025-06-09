@@ -236,16 +236,16 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
                 >
                   <img
                     src={recording.albumArt || placeholderAlbumArt}
-                    alt={`Album art for ${recording.artistName} - ${recording.recordingYear}`}
+                    alt={`Album art for ${recording.artistFirstName} ${recording.artistLastName} - ${recording.recordingYear}`}
                     className="album-art-image"
                   />
                 </div>
                 
                 <div className="recording-info">
-                  <h4 className="pianist-name">{recording.artistName}</h4>
+                  <h4 className="pianist-name">{`${recording.artistFirstName} ${recording.artistLastName}`}</h4>
                   <p className="recording-details">
                     {recording.recordingYear}
-                    {recording.recordLabel && ` • ${recording.recordLabel}`}
+                    {recording.recordLabel && ` • ${recording.recordLabel}${recording.isLive ? ' (Live)' : ''}`}
                   </p>
                 </div>
 
@@ -255,7 +255,7 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
                     onClick={() => handleRecordingPlay(recording.id)}
                     onMouseEnter={() => setHoveredControlId(recording.id)}
                     onMouseLeave={() => setHoveredControlId(null)}
-                    aria-label={isPlaying ? `Stop recording by ${recording.artistName}` : `Play recording by ${recording.artistName}`}
+                    aria-label={isPlaying ? `Stop recording by ${recording.artistFirstName} ${recording.artistLastName}` : `Play recording by ${recording.artistFirstName} ${recording.artistLastName}`}
                   >
                     {isPlaying ? (
                       isControlHovered ? (

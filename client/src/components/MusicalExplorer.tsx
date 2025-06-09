@@ -24,7 +24,8 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 // Helper function to transform RecordingClip to Recording
 const transformClipToRecording = (clip: RecordingClip, color: string): Recording => ({
   id: clip.id,
-  artistName: capitalize(clip.pianistLastName), // Use capitalized last name
+  artistFirstName: capitalize(clip.pianistFirstName), // Added
+  artistLastName: capitalize(clip.pianistLastName), // Renamed and uses capitalized last name
   recordingYear: clip.year,
   colorCode: color,
   graphLineColor: color,
@@ -33,6 +34,7 @@ const transformClipToRecording = (clip: RecordingClip, color: string): Recording
   albumArt: clip.frontArtSrc,
   albumArtBack: clip.backArtSrc,
   section: clip.section,
+  isLive: clip.isLive, // Added
 });
 
 // Process clips and assign colors

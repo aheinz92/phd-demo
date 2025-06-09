@@ -24,24 +24,25 @@ const imageFiles = [
 ];
 
 const audioFilesA = [
-  'horowitz_A_1980_rca_live_-_cut.mp3',
-  'leschenko_A_2012_avanti_-_cut.mp3',
-  'rodriguez_A_1993_elan_-_cut.mp3',
-  'scherbakov_A_1999_naxos_-_cut.mp3',
-  'sudbin_A_2005_BIS_-_cut.mp3',
-  'titova_A_2007_sony_-_cut.mp3',
+  'Kateryna_Titova_A_2007_Sony_-_cut.mp3',
+  'Konstantin_Scherbakov_A_1999_Naxos_-_cut.mp3',
+  'Polina_Leschenko_A_2012_Avanti_-_cut.mp3',
+  'Santiago_Rodriguez_A_1993_Elan_-_cut.mp3',
+  'Vladimir_Horowitz_A_1980_RCA_Victor_Live_-_cut.mp3',
+  'Yevgeny_Sudbin_A_2005_BIS_-_cut.mp3',
 ];
 
 const audioFilesB = [
-  'fiorentino_B_1994_appian_-_cut.mp3',
-  'hamelin_B_1994_port_royal_-_cut.mp3',
-  'horowitz_B_1980_rca_live_-_cut.mp3',
-  'sultanov_B_1997_vai_live_-_cut.mp3',
-  'titova_B_2007_sony_-_cut.mp3',
-  'weissenberg_B_2009_dg_-_cut.mp3',
+  'Alexei_Sultanov_B_1997_VAI_Live_-_cut.mp3',
+  'Alexis_Weissenberg_B_2009_Deutsche_Grammophon_-_cut.mp3',
+  'Kateryna_Ttitova_B_2007_Sony_-_cut.mp3',
+  'Marc-André_Hamelin_B_1994_Port_Royal_-_cut.mp3',
+  'Sergio_Fiorentino_B_1994_Appian_-_cut.mp3',
+  'Vladimir_Horowitz_B_1980_RCA_Victor_Live_-_cut.mp3',
 ];
 
 interface ParsedFilename {
+  pianistFirstName: string; // Added
   pianistLastName: string;
   section: 'A' | 'B';
   year: number;
@@ -55,37 +56,45 @@ const parseFilename = (filename: string): ParsedFilename | null => {
   const cleanedFilename = filename.replace(/_-_cut\.mp3$/, ''); // Remove specific suffix
   const parts = cleanedFilename.split('_');
 
-  // Example: "horowitz_A_1980_rca_live"
-  // parts[0] = horowitz
-  // parts[1] = A
-  // parts[2] = 1980
-  // parts[3] = rca
-  // parts[4] = live (optional)
-  // Minimum parts: pianist, section, year, label = 4
-  if (parts.length < 4) {
-    console.warn(`Could not parse filename: ${filename}. Expected at least 4 parts after splitting by '_', got ${parts.length}`);
+  // Expect: FirstName_LastName_Section_Year_LabelPart1(..._LabelPartN)(_Live)
+  // Min parts: FirstName, LastName, Section, Year, LabelPart1 -> 5 parts
+  if (parts.length < 5) {
+    console.warn(`Could not parse filename: ${filename}. Expected at least 5 parts (FirstName_LastName_Section_Year_Label) after splitting by '_', got ${parts.length}. Parts: ${parts.join(', ')}`);
     return null;
   }
 
-  const pianistLastName = parts[0].toLowerCase();
-  const section = parts[1].toUpperCase() as 'A' | 'B'; // Ensure section is uppercase 'A' or 'B'
-  const year = parseInt(parts[2], 10);
-  const recordLabel = parts[3].toLowerCase();
-  // Check if 'live' is present as one of the later parts
-  const isLive = parts.slice(4).includes('live');
-
+  // parts[0] is FirstName, parts[1] is LastName
+  const pianistFirstName = parts[0]; // Retain original case
+  const pianistLastName = parts[1]; // Retain original case
+  const section = parts[2] as 'A' | 'B'; // Retain original case
+  const yearString = parts[3];
+  const year = parseInt(yearString, 10);
 
   if (isNaN(year)) {
-    console.warn(`Could not parse year from filename: ${filename}. Part used: ${parts[2]}`);
+    console.warn(`Could not parse year from filename: ${filename}. Part used for year: '${yearString}'`);
     return null;
   }
+  // Validate section, even if case is assumed correct from filename
   if (section !== 'A' && section !== 'B') {
-    console.warn(`Invalid section parsed from filename: ${filename}. Part used: ${parts[1]}, Parsed: ${section}`);
+    console.warn(`Invalid section parsed from filename: ${filename}. Part used for section: '${parts[2]}', Parsed: '${section}'`);
     return null;
   }
 
+  const labelRelatedParts = parts.slice(4); // Parts for record label and potential 'Live' flag
+  let isLive = false;
+  let recordLabelParts: string[];
+
+  if (labelRelatedParts.length > 0 && labelRelatedParts[labelRelatedParts.length - 1] === 'Live') {
+    isLive = true;
+    recordLabelParts = labelRelatedParts.slice(0, -1); // All parts before 'Live'
+  } else {
+    recordLabelParts = labelRelatedParts; // All parts if 'Live' is not the last or not present
+  }
+  
+  const recordLabel = recordLabelParts.join(' '); // Join with space, retain original case
 
   return {
+    pianistFirstName,
     pianistLastName,
     section,
     year,
@@ -115,9 +124,9 @@ const graphLineColors = [
 ];
 
 const createRecordingClip = (parsedInfo: ParsedFilename, audioDir: string, graphLineColor: string): RecordingClip => {
-  const { pianistLastName, section, year, recordLabel, isLive, originalFilename } = parsedInfo;
+  const { pianistFirstName, pianistLastName, section, year, recordLabel, isLive, originalFilename } = parsedInfo;
   // ID generation based on explicit example: pianistLastName-section-year-recordLabel
-  const id = `${pianistLastName}-${section.toLowerCase()}-${year}-${recordLabel}`;
+  const id = `${pianistLastName}-${section}-${year}-${recordLabel}`; // Use original case for section
   const audioSrc = `${audioDir}/${originalFilename}`;
 
   let frontArtSrc = findArtPath(pianistLastName, 'front');
@@ -137,6 +146,7 @@ const createRecordingClip = (parsedInfo: ParsedFilename, audioDir: string, graph
 
   return {
     id,
+    pianistFirstName,
     pianistLastName,
     section,
     year,
