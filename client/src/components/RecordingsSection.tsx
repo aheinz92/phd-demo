@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, Square } from 'lucide-react';
 import './RecordingsSection.css'; // Ensure this CSS file is correctly named and placed
 // Changed from direct imports to string paths for files in public directory
-const placeholderAlbumArt = "/assets/images/front_horowitz_rachmaninoff_rca_1.jpg";
-const placeholderAlbumBack = "/assets/images/back_ogdon_rachmaninoff_rca_1.jpg";
+const placeholderAlbumArt = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/images/front_horowitz_rachmaninoff_rca_1.jpg`;
+const placeholderAlbumBack = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/images/back_ogdon_rachmaninoff_rca_1.jpg`;
 
 // Example audio imports - these are likely unused if audioSnippet is sourced from recordingClips.ts
 // import alkanSonataExcerpt from '../assets/audio/alkanSonata8XFugue_excerpt.mp3';

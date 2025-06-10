@@ -281,6 +281,7 @@
   color: #2c2517;
   margin-bottom: 0.25rem;
   line-height: 1.2;
+  text-align: left;
 }
 
 .recording-details {
@@ -289,6 +290,7 @@
   color: #6b7280; /* Default color, year part can be styled differently if desired */
   margin-bottom: 0.125rem;
   line-height: 1.4; /* Adjust for readability if year and label are on same line */
+  text-align: left;
 }
 
 /* If you want the year to be a different color, you'd need to wrap it in a span inside the JSX */

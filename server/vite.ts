@@ -21,9 +21,10 @@ export function log(message: string, source = "express") {
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
+    host: true, // Listen on all addresses, allows access from network
     middlewareMode: true,
     hmr: { server },
-    allowedHosts: true,
+    // allowedHosts: true, // We'll remove this if host: true covers it, or adjust if still needed
   };
 
   const vite = await createViteServer({
@@ -42,7 +43,14 @@ export async function setupVite(app: Express, server: Server) {
 
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
+    let processedUrl = req.originalUrl;
+
+    // viteConfig.base is '/phd-demo/' (ends with a slash)
+    // If req.originalUrl is '/phd-demo' (base without trailing slash),
+    // then pass '/phd-demo/' to transformIndexHtml for consistency.
+    if (viteConfig.base && viteConfig.base.endsWith('/') && req.originalUrl === viteConfig.base.slice(0, -1)) {
+      processedUrl = viteConfig.base;
+    }
 
     try {
       const clientTemplate = path.resolve(
@@ -58,7 +66,7 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
-      const page = await vite.transformIndexHtml(url, template);
+      const page = await vite.transformIndexHtml(processedUrl, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);

@@ -110,7 +110,10 @@ const findArtPath = (pianistLastName: string, type: 'front' | 'back' | 'cover'):
     const lowerFile = file.toLowerCase();
     return searchTerms.every(term => lowerFile.includes(term.toLowerCase()));
   });
-  return foundFile ? `/assets/images/${foundFile}` : undefined; // Changed path
+  // Prepend BASE_URL. Ensure no double slashes if foundFile already starts with one (it doesn't here).
+  // And ensure no double slashes if BASE_URL ends with / and assets/images starts with / (it does).
+  // So, we take BASE_URL, remove trailing slash if any, then append the /assets/... path.
+  return foundFile ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/images/${foundFile}` : undefined;
 };
 
 
@@ -127,7 +130,9 @@ const createRecordingClip = (parsedInfo: ParsedFilename, audioDir: string, graph
   const { pianistFirstName, pianistLastName, section, year, recordLabel, isLive, originalFilename } = parsedInfo;
   // ID generation based on explicit example: pianistLastName-section-year-recordLabel
   const id = `${pianistLastName}-${section}-${year}-${recordLabel}`; // Use original case for section
-  const audioSrc = `${audioDir}/${originalFilename}`;
+  // audioDir is like '/assets/audio/clips_for_part_A'. BASE_URL is like '/phd-demo/'
+  // We want '/phd-demo/assets/audio/clips_for_part_A/filename.mp3'
+  const audioSrc = `${import.meta.env.BASE_URL.replace(/\/$/, '')}${audioDir}/${originalFilename}`;
 
   let frontArtSrc = findArtPath(pianistLastName, 'front');
   if (!frontArtSrc) {
@@ -135,13 +140,13 @@ const createRecordingClip = (parsedInfo: ParsedFilename, audioDir: string, graph
   }
   if (!frontArtSrc) {
     console.warn(`Front art not found for ${pianistLastName} (section ${section}). Using placeholder.`);
-    frontArtSrc = '/assets/images/placeholder_front.png'; // Changed path
+    frontArtSrc = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/images/placeholder_front.png`;
   }
 
   let backArtSrc = findArtPath(pianistLastName, 'back');
   if (!backArtSrc) {
     console.warn(`Back art not found for ${pianistLastName} (section ${section}). Using placeholder.`);
-    backArtSrc = '/assets/images/placeholder_back.png'; // Changed path
+    backArtSrc = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/assets/images/placeholder_back.png`;
   }
 
   return {

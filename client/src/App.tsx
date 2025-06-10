@@ -10,8 +10,11 @@ import MusicalExplorerPage from "./pages/MusicalExplorerPage";
 import HomePage from "./pages/HomePage"; // Added import
 
 function AppRouter() { // Renamed function to avoid conflict with WouterRouter
+  // Ensure BASE_URL for wouter does not have a trailing slash if it's not just "/"
+  const base = import.meta.env.BASE_URL;
+  const wouterBase = base !== '/' ? base.replace(/\/$/, '') : base;
   return (
-    <WouterRouter base={import.meta.env.BASE_URL}>
+    <WouterRouter base={wouterBase}>
       <Switch>
         <Route path="/" component={HomePage} /> {/* Changed component to HomePage */}
         <Route path="/phd-proposal" component={PhdProposalPage} />
