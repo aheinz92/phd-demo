@@ -682,7 +682,7 @@ const animationTriggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         
         <g
           ref={playheadGroupRef}
-          className={`playhead-group ${timelineState.isDragging ? 'playhead-marker-active' : ''}`}
+          className={`playhead-group ${timelineState.isDragging ? 'playhead-marker-active no-transition' : ''}`}
           style={{ transform: `translateX(${playheadX}px)` }} // Apply transform here
           onMouseEnter={() => {
             if (playheadGroupRef.current) {

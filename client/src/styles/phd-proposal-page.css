@@ -997,3 +997,163 @@ footer {
     opacity: 1 !important;
     transform: none !important;
 }
+
+/* Styles for the Prototype Guide expandable section */
+.prototype-guide-details .demo-instructions h4 {
+  font-size: 1.1rem; /* Smaller than default h4 */
+  /* Consider adjusting margin-bottom if needed */
+}
+
+.prototype-guide-details .demo-instructions h5 {
+  font-size: 0.95rem; /* Smaller than default h5 */
+  /* Consider adjusting margin-bottom if needed */
+}
+
+.prototype-guide-details .demo-instructions p,
+.prototype-guide-details .demo-instructions li {
+  font-size: 0.85rem; /* Smaller than default p/li */
+  line-height: 1.5; /* Adjust line-height for readability */
+}
+
+/* You might also want to adjust the summary font size if it also feels too large */
+/*
+.prototype-guide-details > summary {
+  font-size: 1rem; // Example: smaller than the default 1.2rem for expandable-table summary
+}
+*/
+/* Collapsible Section Styles */
+.collapsible-section-phd {
+  margin-bottom: 1rem; /* Add some space between collapsible sections */
+}
+
+.collapsible-title-phd {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0; /* Minimal padding, adjust as needed */
+  /* Inherit font styles from parent, or set specific ones if needed */
+  /* e.g., font-family: 'Playfair Display', serif; */
+  /* font-size: 1.1rem; /* Matching .prototype-guide-details .demo-instructions h4 */
+  /* color: var(--ink); */
+  user-select: none; /* Prevent text selection on click */
+  position: relative; /* For ARIA focus outline */
+}
+
+.collapsible-title-phd:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+
+.arrow-phd {
+  display: inline-block;
+  margin-right: 0.75rem; /* Space between arrow and title text */
+  transition: transform 0.3s ease-out;
+  font-size: 0.8em; /* Make arrow slightly smaller than title text */
+  color: var(--accent); /* Use accent color for the arrow */
+}
+
+.arrow-phd.collapsed {
+  transform: rotate(-90deg); /* Point right when collapsed */
+}
+
+.arrow-phd.expanded {
+  transform: rotate(0deg); /* Point down when expanded */
+}
+
+.collapsible-content-phd {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease-out, opacity 0.3s ease-out;
+  /* background-color: #fdfbf6; /* Optional: slight background for content area */
+  /* border-left: 2px solid var(--sepia); /* Optional: subtle left border */
+  /* margin-left: 1.5rem; /* Indent content slightly, aligning with text after arrow */
+}
+
+.collapsible-content-phd.open {
+  opacity: 1;
+  max-height: 1500px; /* Adjust as needed, should be larger than any expected content */
+}
+
+.collapsible-content-inner-phd {
+  padding: 0.5rem 0 0.5rem 1.75rem; /* Top/bottom padding, left padding to align with title text (arrow width + margin) */
+  /* Match font size and line height of surrounding content */
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Ensure lists inside collapsible content are styled correctly */
+.collapsible-content-inner-phd ul,
+.collapsible-content-inner-phd ol {
+  padding-left: 1.2rem; /* Standard indentation for lists */
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.collapsible-content-inner-phd li {
+  margin-bottom: 0.3rem;
+}
+
+.collapsible-content-inner-phd p {
+    margin-bottom: 0.75rem;
+}
+.collapsible-content-inner-phd p:last-child {
+    margin-bottom: 0;
+}
+
+/* Adjustments for specific heading levels if used as titleElementType */
+.collapsible-title-phd.h2-style {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    margin: 2rem 0 1rem; /* Adjusted from h2 style for less bottom margin when collapsed */
+    border-bottom: 1px solid var(--sepia);
+    padding-bottom: 0.5rem;
+    color: var(--ink);
+}
+.collapsible-title-phd.h2-style + .collapsible-content-phd .collapsible-content-inner-phd {
+    font-size: inherit; /* Or set to a specific body text size */
+    line-height: 1.7;
+    padding-top: 1rem; /* More space after a large title */
+}
+
+
+/* Specific styling for the "Guide to the prototype" section's collapsible titles */
+/* This ensures the h4 within the collapsible component matches the original h4 style */
+#interactive-musical-exploration .prototype-guide-details .collapsible-title-phd {
+  font-family: 'Playfair Display', serif; /* From existing h4 */
+  font-weight: bold; /* From existing h4 */
+  color: var(--accent); /* From existing h4 */
+  margin-bottom: 0.5rem; /* From existing h4 */
+  font-size: 1.1rem; /* From .prototype-guide-details .demo-instructions h4 */
+  padding: 0.25rem 0; /* Reduce padding for these specific titles */
+}
+
+#interactive-musical-exploration .prototype-guide-details .collapsible-title-phd .arrow-phd {
+  font-size: 0.9em; /* Adjust arrow size relative to this specific title */
+  margin-right: 0.5rem;
+}
+
+#interactive-musical-exploration .prototype-guide-details .collapsible-content-phd .collapsible-content-inner-phd {
+  padding-left: 1.5rem; /* Adjust inner padding to align with new arrow position */
+  font-size: 0.85rem; /* From .prototype-guide-details .demo-instructions p/li */
+  line-height: 1.5; /* From .prototype-guide-details .demo-instructions p/li */
+}
+.author-credit {
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 1.5rem;
+    margin-top: 4rem; /* Space above the credit */
+}
+
+.author-credit-year {
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 1rem;
+    padding-bottom: 2rem; /* Space at the very bottom of the container */
+}

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import proposalPageCssUrl from '../styles/phd-proposal-page.css?url';
 import MusicalExplorerPageWrapper from '../components/MusicalExplorer';
+import CollapsibleSection from '../components/CollapsibleSection';
 
 const PhdProposalPage: React.FC = () => {
   useEffect(() => {
@@ -183,9 +184,9 @@ useEffect(() => {
             <h2>I. Introduction</h2>
             <p>Classical music, particularly the piano repertoire, thrives on the nuance of interpretation. The same score yields vastly different experiences in the hands of different artists across time. While the practice of comparative listening - contrasting different interpretations - is central to deep appreciation and learning, it faces significant hurdles. Human listeners are invariably limited by time, effort, attention span, memory, and cognitive biases when attempting to perceive differences across numerous recordings.</p>
             <br />
-            <p>Furthermore, the sheer scale of available recordings presents a daunting challenge: hundreds of acclaimed interpretations exist for countless pieces, making thorough manual comparison practically impossible, especially for longer works. This proposal outlines a PhD project aimed at overcoming these limitations by developing a novel machine learning methodology coupled with an intuitive interface to facilitate the exploration and enjoyment of the rich variety of classical piano recordings at scale.</p>
+            <p>Furthermore, the sheer scale of available recordings presents a daunting challenge: hundreds of acclaimed interpretations exist for countless pieces, making thorough manual comparison practically impossible, especially for longer works. This proposal outlines a PhD project aimed at overcoming these limitations by developing a novel machine learning methodology coupled with an intuitive interface and platform to facilitate the exploration and enjoyment of the rich variety of classical piano recordings at scale.</p>
             <br />
-            <p>The goal is not merely technological advancement, but to deepen our connection to musical artistry, making the profound experience of comparative listening more accessible and fostering a renewed appreciation for classical music.</p>
+            <p>The goal is not merely technological advancement, but to deepen our connection to musical artistry, making the profound experience of comparative listening more accessible and fostering a renewed appreciation for classical music - especially the diverse perspectives on it that exist but are often underacknowledged. The desire is to draw attention to what is often hiding in plain sight with regards to the perception of classical music: that it is the unique artistic perspectives and variations in musical rendering that create the magic behind the score and allow it to continue to live and breathe, today and in the future. A project like this can both enhance the ability to see and experience the richness of diverse interpretations, and furthermore steer the greater discourse towards celebrating these differences and unique qualities, rather than promoting an idea that music is about reaching a predetermined perfection. This immediacy of seeing, hearing, understanding, and appreciating the real scope and beauty of artistic variance is hoped to aid a change in perspectives and work towards a necessary tonal shift in the treatment of classical music as a whole.</p>
         </section>
 
         <section id="relevance">
@@ -195,6 +196,10 @@ useEffect(() => {
                  <div className="card">
                      <h3>Enhancing Musical Experience, Engagement, and Cultural Connection</h3>
                      <p>This project aims to deepen the artistic experience for musicians and scholars by providing tools to explore expressive nuances in performance, fostering new analytical perspectives and enriching interpretation. Furthermore, it seeks to foster broader listener engagement through intuitive interfaces that make complex musical subtleties more accessible and enjoyable. By offering a new lens for appreciating diverse musical traditions, the research also contributes to their cultural revitalization, making unique characteristics more tangible and supporting their preservation.</p>
+                 </div>
+                 <div className="card">
+                     <h3>Broaden Perspectives and Reinvigorate the Art Form</h3>
+                     <p>This project seeks to move beyond technological novelty to foster a deeper connection with musical artistry. By making comparative listening more accessible, it aims to highlight often underacknowledged diverse perspectives within classical music. The core idea is to reveal how unique artistic interpretations and variations in performance are what truly animate a musical score, allowing it to resonate across time. Ultimately, this work endeavors to enhance the experience of interpretive richness, encourage a celebration of these differences, and contribute to a broader shift in appreciating classical music not as a pursuit of singular perfection, but as a vibrant, evolving art form shaped by diverse voices.</p>
                  </div>
                  <div className="card">
                      <h3>Advancing Music Information Retrieval (MIR)</h3>
@@ -207,10 +212,6 @@ useEffect(() => {
                  <div className="card">
                      <h3>Enhancing Music Pedagogy</h3>
                      <p>This research offers substantial pedagogical potential by equipping music students and educators with powerful new analytical tools for the study of performance practice. The capacity to efficiently compare and deconstruct diverse interpretations promises to significantly enhance critical listening skills and foster a more profound understanding of musical artistry and interpretive traditions.</p>
-                 </div>
-                 <div className="card">
-                     <h3>Addressing Ethical Dimensions</h3>
-                     <p>The project acknowledges and proactively addresses the key ethical dimensions inherent in music technology research. Diligent consideration will be afforded to issues of copyright, data provenance, performer attribution, and the potential for algorithmic bias, ensuring responsible innovation and ethically sound deployment of the developed tools.</p>
                  </div>
              </div>
         </section>
@@ -279,10 +280,57 @@ useEffect(() => {
         </section>
 
         <section id="interactive-musical-exploration">
-          <h2>V. Interactive Musical Exploration</h2>
+
+          <h2>V. Demo: Interactive Musical Exploration</h2>
+
+          <details className="expandable-table prototype-guide-details">
+            <summary>Guide to the prototype</summary>
+            
+            <div className="table-content-wrapper">
+              <div className="demo-instructions">
+                <CollapsibleSection title="What is This Demo?">
+                  <p>
+                    This is a high-fidelity prototype envisioning how this platform for exploring musical interpretations can be designed.
+                    It simulates the detection of variance (differences) among musical interpretations, particularly detecting on specific musical sections found to have the widest range of expression. This allows for direct comparative listening of these key moments across various recordings, while also visualizing this analysis across a timeline.
+                    It aims to make the fascinating and often surprising world of differing musical interpretations more immediately accessible, engaging, and focused for everyone.
+                  </p>
+                </CollapsibleSection>
+                <CollapsibleSection title="Key Features">
+                  <ul>
+                    <li><strong>Focused Listening:</strong> Access a curated library of short audio clips for two distinct musical sections (Section A and Section B), allowing for targeted comparison.</li>
+                    <li><strong>Interpretive Variance Graphs:</strong> View line graphs that conceptually represent the differences in interpretation between recordings across the timeline, which overall represents a zoomed-in section of a larger musical work.</li>
+                    <li><strong>Interactive Timeline with Flexible Playhead Control:</strong> Visually manipulate a timeline with a playhead. The playhead can snap to highlighted "moments of interest" within the musical passage, and responds as expected to a variety of user interactions.</li>
+                    <li><strong>Recording Selection:</strong> Cards for available recordings automatically populate for each section. (Currently, six curated recordings are shown per section; a future platform would feature many more, with sorting/filtering options).</li>
+                    <li><strong>Hover and Click Interactions:</strong> Hovering over a recording card highlights its corresponding line on the chart, while clicking on a card keeps its line highlighted until another card is clicked.</li>
+                    <li><strong>Album Art Explorer:</strong> Click on any recording's album cover to see a larger version. Click the enlarged cover again to flip it and view its "back," which includes a magnifier tool. Use your mouse scroll wheel to adjust the magnifier's zoom level to read small text. Click outside the enlarged image to close it.</li>
+                    <li><strong>Robust Audio Playback:</strong> Smoothly start, stop, and pause playback. Playback can be seamlessly interrupted by selecting another track, switching to a different musical section, or moving the playhead.</li>
+                    <li><strong>Dynamic Visualization:</strong> The line graph corresponding to the currently playing recording is automatically highlighted on the chart, and the playhead moves across the section during playback.</li>
+                  </ul>
+                </CollapsibleSection>
+                <CollapsibleSection title="Suggested Walkthrough">
+                  <ul>
+                    <li><strong>1. </strong> Play around with clicking and dragging the playhead around the timeline. By moving it into a highlighted musical section, it will snap to it, and the list of audio clips will appear for that specific section.</li>
+                    <li><strong>2. </strong> Hover over other recording cards to see their lines temporarily light up on the chart. Clicking the general area of a card makes its line stay highlighted.</li>
+                    <li><strong>3. </strong> Click on a recording's album cover to enlarge it, and click the large cover again to flip to the back, where you can change the magnifier with the mouse scroll wheel. Click anywhere outside the image to close it.</li>
+                    <li><strong>4. </strong> Play a recording with the play button. The line will stay highlighted during playback, and the playhead will begin moving.</li>
+                    <li><strong>5. </strong> Play a recording with the play button. The line will stay highlighted during playback, and the playhead will begin moving.</li>
+                    <li><strong>6. </strong> Select a recording from Section A or Section B by clicking its card.</li>
+                    <li><strong>7. </strong> I recommend listening to at least two recordings in <em>each</em> highlighted section (A and B) to experience the differences in interpretation. Of course, I would love if you gave them all a listen!</li>
+                  </ul>
+                </CollapsibleSection>
+                <CollapsibleSection title="Important Caveats">
+                  <p><strong>The Music & Selections are Real:</strong> The chosen musical excerpts and the specific recordings are real and were very carefully and intentionally curated from a huge library. I believe that listening to them closely and contrasting them can be a revelatory experience.</p>
+                  <p><strong>Visualizations are for Demonstration Purposes Only:</strong> The lines you see on the chart are generated mathematically purely for <em>demonstration</em>. They are an <em>imagining</em> of what a visualization of interpretive variance might look like after processing audio files and charting their deviation from a calculated average. <em>These lines do not actually correlate precisely with the musical content of the recordings.</em> While a general attempt was made to align them with perceived differences, they are not scientifically accurate representations for these specific clips.
+                    The overall highlighted time range (e.g., "0:53 to 5:38") and the specific timestamps displayed by the playhead as it moves are <em>approximate and not strictly correct</em>. They serve as visual aids for this demonstration.</p>
+                </CollapsibleSection>
+              </div>
+            </div>
+          </details>
+
           <div id="musical-explorer-instance">
             <MusicalExplorerPageWrapper />
           </div>
+
         </section>
 
         <section id="literature">
@@ -446,8 +494,8 @@ useEffect(() => {
                     <li><strong>Interdisciplinary Academics:</strong> Double degree in Informatics and German Studies, plus prior university studies in Computer Science and Music, demonstrating a long-term commitment to integrating technology, data analysis, arts, and humanities.</li>
                     <li><strong>Initiative for Research:</strong> Successfully designed and executed self-guided research projects (e.g., self-conducted independent study courses, a critical Spotify API analysis for classical and solo piano repertoire, a sentiment analysis in Schubert's art song texts, etc.), showcasing proactive independent research capabilities specifically with unique music and data intersections.</li>
                     <li><strong>Technical Skills:</strong> Proficiency in several coding languages, data visualization tools, AI frameworks, and full-stack web development fundamentals.</li>
-                    <li><strong>Domain Passion:</strong> A decade of passionate engagement with classical piano, including extensive curation of massive libraries for comparative listening, translation work focused on accessibility, special analysis projects, and broadcasting. This project directly addresses long-held research interests.</li>
-                    <li><strong>Communication Aptitude:</strong> Experience translating complex musical ideas into accessible formats for broad audiences (e.g., via broadcasting).</li>
+                    <li><strong>Domain Passion:</strong> Decades of passionate engagement with classical piano, including extensive cataloging of massive libraries for comparative listening (~4,000 records & ~75,000 tracks individually curated), translation work to expand audience accessibility of art songs, special analysis projects, and broadcasting. This project directly addresses long-held research interests.</li>
+                    <li><strong>Communication Aptitude:</strong> Experience translating complex musical ideas into accessible formats for broad audiences (e.g., via broadcasting and content creation with musical performance and discussion).</li>
                 </ul>
             </div>
 
@@ -458,7 +506,7 @@ useEffect(() => {
                     <li><strong>Interdisciplinary Hub:</strong> UW excels at fostering collaboration across departments like the iSchool, Computer Science & Engineering, Music, and DXARTS, providing access to world-class faculty in ML, HCI, MIR, digital humanities, and musicology.</li>
                     <li><strong>Leading Research:</strong> Home to leading researchers and labs in relevant areas, including established ML/AI groups, HCI labs, and MIR researchers with expertise directly applicable to this project.</li>
                     <li><strong>Technological Ecosystem:</strong> Seattle's position as a global tech hub provides a rich environment, potential industry connections, and access to cutting-edge developments.</li>
-                    <li><strong>Vibrant Arts Community:</strong> The city's strong support for the arts, including the renowned Seattle Symphony, offers potential for local impact, collaboration, and user study recruitment.</li>
+                    <li><strong>Vibrant Arts Community:</strong> The city's strong support for the arts, including the renowned Seattle Symphony and vibrant local music scenes, offers potential for local impact, collaboration, and user study recruitment.</li>
                 </ul>
             </div>
 
@@ -479,7 +527,7 @@ useEffect(() => {
             <div className="timeline">
             <div className="card" style={{ marginBottom: '2rem' }}>
                 <h3>Ensuring Methodological Feasibility</h3>
-                <p>The project's feasibility is underpinned by a research phases that leverage established audio processing techniques and contemporary machine learning advancements. The initial focus on piano repertoire provides a well-defined, data-rich domain for robust methodological development, systematic testing, and thorough validation.</p>
+                <p>The project's feasibility is underpinned by a research phases that leverage established audio processing techniques and contemporary machine learning advancements. The initial focus on solo piano repertoire is ideal as a well-defined domain, data-rich for robust methodological development, systematic testing, and thorough validation.</p>
             </div>
                 <div className="timeline-item">
                     <div className="timeline-content">
@@ -491,21 +539,21 @@ useEffect(() => {
                 <div className="timeline-item">
                     <div className="timeline-content">
                         <h4>Phase 1 (Year 2): Model Refinement & Prototyping</h4>
-                        <p>Refine ML models (e.g., exploring Bayesian or contrastive approaches), explore advanced architectures. Begin design and early prototyping of the interactive frontend. Conduct initial feasibility tests and small-scale evaluations.</p>
+                        <p>Refine ML models (e.g., exploring Bayesian or contrastive approaches), explore advanced architectures. Focus on further design, prototyping, and implementation of real processed data with the interactive frontend. Conduct initial feasibility tests and small-scale evaluations.</p>
                         <br /><p><strong>Milestone:</strong> Improved ML models; initial frontend prototype; potential conference paper [e.g., ISMIR].</p>
                     </div>
                 </div>
                  <div className="timeline-item">
                     <div className="timeline-content">
                         <h4>Phase 2 (Year 3): Frontend Development & Integration</h4>
-                        <p>Develop functional web-based exploration tool, integrating ML backend analysis. Design and implement core visualizations and interactions. Begin usability testing with target user groups.</p>
+                        <p>Develop functional web-based exploration tool, integrating ML backend analysis. Refine the implementations of core visualizations and interactions. Begin usability testing with target user groups.</p>
                         <br /><p><strong>Milestone:</strong> Working prototype of the interactive tool; publication on methodology/prototype.</p>
                     </div>
                 </div>
                  <div className="timeline-item">
                     <div className="timeline-content">
                         <h4>Phase 2 (Year 4): User Evaluation & Scaling</h4>
-                        <p>Conduct comprehensive user studies (qualitative/quantitative) with diverse participants. Scale analysis pipeline to larger corpus/different repertoire. Refine tool based on feedback. Explore initial pedagogical applications.</p>
+                        <p>Conduct comprehensive user studies (qualitative/quantitative) with diverse participants. Scale analysis pipeline to a larger corpus/different repertoire. Refine tool based on feedback. Explore initial pedagogical applications.</p>
                         <br /><p><strong>Milestone:</strong> User study results published; robust & scalable analysis pipeline.</p>
                     </div>
                 </div>
@@ -524,7 +572,7 @@ useEffect(() => {
             <div className="musical-list-section">
                 <p>While aiming to enhance appreciation, potential risks must be addressed:</p>
                 <ul className="musical-list">
-                    <li><strong>Copyright:</strong> Primarily utilizing commercially available recordings for analysis under fair use principles for research. Focusing on feature analysis rather than audio redistribution unless licensed. Ensuring proper attribution to artists and labels.</li>
+                    <li><strong>Copyright:</strong> Primarily utilizing commercially available recordings for analysis under fair use principles for research. Focusing on feature analysis rather than audio redistribution unless licensed. Ensuring proper attribution to artists and labels. Exploring future viable licensing options as the exploration tool approaches the opportunity for wider public access.</li>
                     <li><strong>Algorithmic Bias & Impact on Artistry:</strong> Acknowledging potential biases in recording availability and algorithmic analysis. Critically considering how analytical tools might influence performance practice – avoiding over-centralization around an "average" or conversely, over-valuing algorithmically flagged "uniqueness" at the expense of musicality. The goal is to provide insight, not dictate artistic norms.</li>
                     <li><strong>Data Representation:</strong> Ensuring that the chosen features and models capture musically meaningful aspects of interpretation, rather than arbitrary signal characteristics.</li>
                     <li><strong>User Privacy:</strong> Ensuring anonymity and data security if user interaction data is collected during evaluations.</li>
@@ -552,6 +600,12 @@ useEffect(() => {
                 </ul>
             </div>
         </section>
+        <div className="author-credit">
+          by Austin Heinz
+        </div>
+        <div className="author-credit-year">
+          2025
+        </div>
       </div>
     </>
   );

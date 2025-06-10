@@ -1,0 +1,173 @@
+/* Styles for Musical Explorer Page, inspired by phd-proposal-page.css */
+:root {
+    --parchment: #f9f6f0; /* Light background */
+    --ink: #2c2517;      /* Dark text */
+    --sepia: #d4c7aa;    /* Accent lines, borders */
+    --accent: #8b2942;   /* Main accent color (deep red/purple) */
+    --light-accent: #f0e6e8; /* Lighter background for sections */
+    --staff-line: #b3ada3; /* Color for background staff lines */
+    --ornament-color: #d4c7aa; /* Color for the header ornament */
+}
+
+body {
+    font-family: 'Lora', serif; /* Serif for body text */
+    color: var(--ink);
+    background-color: var(--parchment);
+    line-height: 1.7; /* Slightly increased line height */
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Apply a base background color similar to PhdProposalPage to the body if this page is standalone,
+   or ensure the container itself has the parchment background.
+   For this component, we'll style the container directly. */
+
+.musical-explorer-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Align to start, let content flow naturally */
+    min-height: 100vh; /* Take full viewport height */
+    padding: 2rem;
+    background-color: var(--parchment);
+    color: var(--ink);
+    text-align: center; /* Center text like the title */
+}
+
+.musical-explorer-page-container h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 6vw, 3.5rem); /* Responsive font size */
+    margin-bottom: 2rem; /* Increased margin for better separation */
+    line-height: 1.2;
+    color: var(--ink);
+    border-bottom: 1px solid var(--sepia);
+    padding-bottom: 0.75rem;
+    width: 100%;
+    max-width: 900px; /* Consistent with PhdProposalPage container */
+}
+
+/* Ensure the MusicalExplorer component itself is centered if it's not full width.
+   The component itself might have its own width constraints.
+   The flex centering on musical-explorer-page-container should handle this. */
+/* Styles for the guide sections container */
+.guide-sections-container {
+    margin-top: 2rem; /* Add some space below the title */
+    margin-bottom: 2rem; /* Add some space above the MusicalExplorer component */
+    padding: 1rem;
+    background-color: var(--light-accent); /* Optional: to match PhdProposalPage section style */
+    border: 1px solid var(--sepia); /* Optional: to match PhdProposalPage section style */
+    border-radius: 8px; /* Optional: to match PhdProposalPage section style */
+}
+
+/* Copied from phd-proposal-page.css for CollapsibleSection */
+.collapsible-section-phd {
+  margin-bottom: 1rem; /* Add some space between collapsible sections */
+}
+
+.collapsible-title-phd {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0; /* Minimal padding, adjust as needed */
+  /* Inherit font styles from parent, or set specific ones if needed */
+  /* e.g., font-family: 'Playfair Display', serif; */
+  /* font-size: 1.1rem; /* Matching .prototype-guide-details .demo-instructions h4 */
+  /* color: var(--ink); */
+  user-select: none; /* Prevent text selection on click */
+  position: relative; /* For ARIA focus outline */
+  font-family: 'Playfair Display', serif; /* From existing h4 */
+  font-weight: bold; /* From existing h4 */
+  color: var(--accent); /* From existing h4 */
+  font-size: 1.1rem; /* From .prototype-guide-details .demo-instructions h4 */
+}
+
+.collapsible-title-phd:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+
+.arrow-phd {
+  display: inline-block;
+  margin-right: 0.75rem; /* Space between arrow and title text */
+  transition: transform 0.3s ease-out;
+  font-size: 0.8em; /* Make arrow slightly smaller than title text */
+  color: var(--accent); /* Use accent color for the arrow */
+}
+
+.arrow-phd.collapsed {
+  transform: rotate(-90deg); /* Point right when collapsed */
+}
+
+.arrow-phd.expanded {
+  transform: rotate(0deg); /* Point down when expanded */
+}
+
+.collapsible-content-phd {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease-out, opacity 0.3s ease-out;
+  /* background-color: #fdfbf6; /* Optional: slight background for content area */
+  /* border-left: 2px solid var(--sepia); /* Optional: subtle left border */
+  /* margin-left: 1.5rem; /* Indent content slightly, aligning with text after arrow */
+}
+
+.collapsible-content-phd.open {
+  opacity: 1;
+  max-height: 1500px; /* Adjust as needed, should be larger than any expected content */
+}
+
+.collapsible-content-inner-phd {
+  padding: 0.5rem 0 0.5rem 1.75rem; /* Top/bottom padding, left padding to align with title text (arrow width + margin) */
+  /* Match font size and line height of surrounding content */
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink); /* Ensure text color is consistent */
+}
+
+/* Ensure lists inside collapsible content are styled correctly */
+.collapsible-content-inner-phd ul,
+.collapsible-content-inner-phd ol {
+  padding-left: 1.2rem; /* Standard indentation for lists */
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.collapsible-content-inner-phd li {
+  margin-bottom: 0.3rem;
+}
+
+.collapsible-content-inner-phd p {
+    margin-bottom: 0.75rem;
+}
+.collapsible-content-inner-phd p:last-child {
+    margin-bottom: 0;
+}
+
+/* Specific styling for the collapsible titles in MusicalExplorerPage */
+.guide-sections-container .collapsible-title-phd {
+  font-family: 'Playfair Display', serif;
+  font-weight: bold;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  padding: 0.25rem 0;
+}
+
+.guide-sections-container .collapsible-title-phd .arrow-phd {
+  font-size: 0.9em;
+  margin-right: 0.5rem;
+}
+
+.guide-sections-container .collapsible-content-phd .collapsible-content-inner-phd {
+  padding-left: 1.5rem; /* Adjust inner padding to align with new arrow position */
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Ensure the h4 styling for titles is applied correctly */
+.guide-sections-container .collapsible-section-phd .collapsible-title-phd {
+    /* This selector ensures that if titleElementType is 'h4' (default), it gets these styles */
+    /* If you use other titleElementTypes, you might need to adjust or add selectors */
+}

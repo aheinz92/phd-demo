@@ -1,0 +1,68 @@
+:root {
+    --parchment: #f9f6f0; /* Light background */
+    --ink: #2c2517;      /* Dark text */
+    --sepia: #d4c7aa;    /* Accent lines, borders */
+    --accent: #8b2942;   /* Main accent color (deep red/purple) */
+    --light-accent: #f0e6e8; /* Lighter background for sections */
+    --staff-line: #b3ada3; /* Color for background staff lines */
+    --ornament-color: #d4c7aa; /* Color for the header ornament */
+}
+
+.home-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--parchment);
+  padding: 2rem;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: 'EB Garamond', serif;
+}
+
+.home-links-wrapper {
+  background-color: white;
+  padding: 2.5rem 3.5rem; /* Slightly increased padding */
+  border-radius: 10px; /* Slightly larger radius */
+  box-shadow: 0 6px 15px rgba(44, 37, 23, 0.15); /* Using --ink with adjusted alpha and spread */
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem; /* Slightly increased gap */
+}
+
+.home-title {
+  font-size: 2.8rem; /* Slightly larger */
+  color: var(--ink);
+  margin-bottom: 1.5rem; /* Increased margin */
+  font-weight: 40;
+  font-family: 'Lora', serif;
+}
+
+.home-link-button {
+  display: inline-block;
+  padding: 1rem 2rem; /* Increased padding */
+  font-size: 1.3rem; /* Adjusted font size */
+  font-weight: 100;
+  color: var(--parchment); /* Text color for contrast with accent */
+  background-color: var(--accent);
+  border: px solid var(--sepia); /* Subtle border */
+  border-radius: 8px; /* Rounded corners */
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+  font-family: 'Lora', serif;
+  box-shadow: 0 6px 15px rgba(44, 37, 23, 0.15);
+}
+
+.home-link-button:hover {
+  background-color: #7a2339; /* Darker shade of --accent */
+  border-color: var(--ink); /* Darker border on hover */
+  transform: translateY(-2px);
+}
+
+.home-link-button:active {
+  transform: translateY(0);
+  background-color: #691f31; /* Even darker for active state */
+}
