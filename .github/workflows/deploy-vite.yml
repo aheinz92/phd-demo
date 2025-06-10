@@ -39,6 +39,8 @@ jobs:
         run: npm run build # This should use your vite build command
         env:
           NODE_ENV: production
+      - name: Copy index.html to 404.html for SPA fallback
+        run: cp ./dist/public/index.html ./dist/public/404.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
