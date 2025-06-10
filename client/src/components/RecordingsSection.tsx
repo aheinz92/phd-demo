@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Volume2, Square } from 'lucide-react';
 import './RecordingsSection.css'; // Ensure this CSS file is correctly named and placed
 // Changed from direct imports to string paths for files in public directory
@@ -50,9 +50,13 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
   const [backgroundPosition, setBackgroundPosition] = useState({ x: 0, y: 0 });
   const [zoomLevel, setZoomLevel] = useState(MIN_ZOOM);
   const backImageRef = useRef<HTMLDivElement>(null);
+  const flipperRef = useRef<HTMLDivElement>(null); // Ref for the flipper
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [modalArtAspectRatio, setModalArtAspectRatio] = useState<string>('1 / 1'); // Default to square
-  const initialBodyStylesRef = useRef<{ overflow: string; paddingRight: string } | null>(null);
+  const initialStylesRef = useRef<{
+    body: { overflow: string; paddingRight: string; cursor: string };
+    flipper: { cursor: string };
+  } | null>(null);
 
   const [shouldRender, setShouldRender] = useState(isVisible);
   const [isHiding, setIsHiding] = useState(false);
@@ -102,40 +106,58 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
 
   // Effect to lock/unlock page scroll when magnifier is active
   useEffect(() => {
-    // Capture initial computed body styles only once
-    if (!initialBodyStylesRef.current) {
-      const computedStyle = window.getComputedStyle(document.body);
-      initialBodyStylesRef.current = {
-        overflow: computedStyle.overflow,
-        paddingRight: computedStyle.paddingRight,
+    if (!initialStylesRef.current && flipperRef.current) {
+      const bodyComputedStyle = window.getComputedStyle(document.body);
+      const flipperComputedStyle = window.getComputedStyle(flipperRef.current);
+      initialStylesRef.current = {
+        body: {
+          overflow: bodyComputedStyle.overflow,
+          paddingRight: bodyComputedStyle.paddingRight,
+          cursor: bodyComputedStyle.cursor,
+        },
+        flipper: {
+          cursor: flipperComputedStyle.cursor,
+        },
       };
     }
 
-    const originalStyles = initialBodyStylesRef.current;
-    let appliedPadding = false;
+    const originalBodyStyles = initialStylesRef.current?.body;
+    const originalFlipperStyles = initialStylesRef.current?.flipper;
 
     if (isMagnifierVisible) {
-      // Check if content overflows the viewport height, indicating a scrollbar would normally be present
+      document.body.style.overflow = 'hidden';
+      document.body.style.cursor = 'none';
+      if (flipperRef.current) {
+        flipperRef.current.style.cursor = 'none';
+      }
+
       const wouldHaveScrollbar = document.body.scrollHeight > window.innerHeight;
-      
       if (wouldHaveScrollbar) {
         const scrollbarWidth = getScrollbarWidth();
-        if (scrollbarWidth > 0) { // Ensure scrollbar has a width
+        if (scrollbarWidth > 0) {
           document.body.style.paddingRight = `${scrollbarWidth}px`;
-          appliedPadding = true;
         }
       }
-      document.body.style.overflow = 'hidden';
     } else {
-      // Restore initial styles
-      document.body.style.overflow = originalStyles.overflow;
-      document.body.style.paddingRight = originalStyles.paddingRight;
+      if (originalBodyStyles) {
+        document.body.style.overflow = originalBodyStyles.overflow;
+        document.body.style.paddingRight = originalBodyStyles.paddingRight;
+        document.body.style.cursor = originalBodyStyles.cursor;
+      }
+      if (flipperRef.current && originalFlipperStyles) {
+        flipperRef.current.style.cursor = originalFlipperStyles.cursor;
+      }
     }
 
     return () => {
-      // Ensure styles are restored on unmount
-      document.body.style.overflow = originalStyles.overflow;
-      document.body.style.paddingRight = originalStyles.paddingRight;
+      if (originalBodyStyles) {
+        document.body.style.overflow = originalBodyStyles.overflow;
+        document.body.style.paddingRight = originalBodyStyles.paddingRight;
+        document.body.style.cursor = originalBodyStyles.cursor;
+      }
+      if (flipperRef.current && originalFlipperStyles) {
+        flipperRef.current.style.cursor = originalFlipperStyles.cursor;
+      }
     };
   }, [isMagnifierVisible]);
 
@@ -248,7 +270,7 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
     }
   };
 
-  const handleWheelOnBack = (event: React.WheelEvent<HTMLDivElement>) => {
+  const handleWheelOnBack = useCallback((event: WheelEvent) => {
     if (!isMagnifierVisible || !backImageRef.current || !isFlipped) return;
     event.preventDefault();
 
@@ -267,12 +289,28 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
       const bgX = -(mouseXOnImage * newZoom - MAGNIFIER_SIZE / 2);
       const bgY = -(mouseYOnImage * newZoom - MAGNIFIER_SIZE / 2);
       setBackgroundPosition({ x: bgX, y: bgY });
-      
+
       setMagnifierPosition({ x: mouseXOnImage - MAGNIFIER_SIZE / 2, y: mouseYOnImage - MAGNIFIER_SIZE / 2 });
 
       return newZoom;
     });
-  };
+  }, [isMagnifierVisible, isFlipped, MAGNIFIER_SIZE, MAX_ZOOM, MIN_ZOOM, ZOOM_STEP, setZoomLevel, setBackgroundPosition, setMagnifierPosition]);
+
+  // Effect to handle wheel event listener with passive: false
+  useEffect(() => {
+    const backImageElement = backImageRef.current;
+
+    // The wheel event should only be active when the magnifier is visible.
+    if (backImageElement && isFlipped && isMagnifierVisible) {
+      const wheelListener = (event: Event) => handleWheelOnBack(event as WheelEvent);
+      
+      backImageElement.addEventListener('wheel', wheelListener, { passive: false });
+
+      return () => {
+        backImageElement.removeEventListener('wheel', wheelListener);
+      };
+    }
+  }, [isFlipped, isMagnifierVisible, handleWheelOnBack]);
 
   const handleRecordingPlay = (recordingId: string) => {
     const selectedRecording = recordings.find(r => r.id === recordingId);
@@ -488,6 +526,7 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
                 className={`modal-art-flipper ${isFlipped ? 'flipped' : ''}`}
                 style={{ aspectRatio: modalArtAspectRatio }}
                 onClick={() => setIsFlipped(!isFlipped)} // Click art to flip
+                ref={flipperRef}
               >
                 <div className="modal-art-front">
                   <img
@@ -502,7 +541,7 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
                   onMouseMove={handleMouseMoveOnBack}
                   onMouseLeave={handleMouseLeaveBack}
                   onMouseEnter={handleMouseEnterBack}
-                  onWheel={handleWheelOnBack}
+                  // onWheel={handleWheelOnBack} // Removed direct prop, handled by useEffect
                 >
                   <img
                     src={backArtUrl}
