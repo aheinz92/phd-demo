@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Link } from 'wouter';
 import proposalPageCssUrl from '../styles/phd-proposal-page.css?url';
 import MusicalExplorerPageWrapper from '../components/MusicalExplorer';
 import CollapsibleSection from '../components/CollapsibleSection';
@@ -330,7 +331,9 @@ useEffect(() => {
           <div id="musical-explorer-instance">
             <MusicalExplorerPageWrapper />
           </div>
-
+          <div style={{ textAlign: 'center', fontSize: 'small', marginTop: '2.5rem', marginBottom: '1rem' }}>
+            To view this demo on its own dedicated page, <Link href="/explorer" className="inline-link">click here</Link>.
+          </div>
         </section>
 
         <section id="literature">

@@ -47,6 +47,13 @@ const MusicalExplorerPage: React.FC = () => {
             The overall highlighted time range (e.g., "0:53 to 5:38") and the specific timestamps displayed by the playhead as it moves are <em>approximate and not strictly correct</em>. They serve as visual aids for this demonstration.</p>
         </CollapsibleSection>
       </div>
+      
+      <div className="author-credit">
+        by Austin Heinz
+      </div>
+      <div className="author-credit-year">
+        2025
+      </div>
     </div>
   );
 };

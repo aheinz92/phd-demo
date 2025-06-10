@@ -1,6 +1,6 @@
 /* Styles for Musical Explorer Page, inspired by phd-proposal-page.css */
 :root {
-    --parchment: #f9f6f0; /* Light background */
+    --parchment: #faf4e9; /* Light background */
     --ink: #2c2517;      /* Dark text */
     --sepia: #d4c7aa;    /* Accent lines, borders */
     --accent: #8b2942;   /* Main accent color (deep red/purple) */
@@ -170,4 +170,22 @@ body {
 .guide-sections-container .collapsible-section-phd .collapsible-title-phd {
     /* This selector ensures that if titleElementType is 'h4' (default), it gets these styles */
     /* If you use other titleElementTypes, you might need to adjust or add selectors */
+}
+
+.author-credit {
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 1.5rem;
+    margin-top: 4rem; /* Space above the credit */
+}
+
+.author-credit-year {
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 1rem;
+    padding-bottom: 2rem; /* Space at the very bottom of the container */
 }
