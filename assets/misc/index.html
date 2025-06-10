@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Austin Heinz - Proposal on Musical Data Exploration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Custom styles inspired by the second snippet */
+        :root {
+            --parchment: #f9f6f0; /* Light background */
+            --ink: #2c2517;      /* Dark text */
+            --sepia: #d4c7aa;    /* Accent lines, borders */
+            --accent: #8b2942;   /* Main accent color (deep red/purple) */
+            --light-accent: #f0e6e8; /* Lighter background for sections */
+            --staff-line: #b3ada3; /* Color for background staff lines */
+            --ornament-color: #d4c7aa; /* Color for the header ornament */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+             scroll-behavior: smooth; /* Add smooth scrolling */
+        }
+
+        body {
+            font-family: 'Lora', serif; /* Serif for body text */
+            color: var(--ink);
+            background-color: var(--parchment);
+            line-height: 1.7; /* Slightly increased line height */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        /* Background Staff Lines */
+        .staff-background {
+            position: fixed;
+            height: 100vh;
+            width: 100vw;
+            top: 0;
+            left: 0;
+            z-index: -2; /* Behind ornament and content */
+            opacity: 0.07; /* Subtle opacity */
+            pointer-events: none;
+        }
+
+        .staff-line {
+            position: absolute;
+            height: 1px;
+            width: 100%;
+            background-color: var(--staff-line);
+        }
+
+        /* Header Styles */
+        header {
+            min-height: 100vh; /* Use min-height for flexibility */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative; /* Needed for absolute positioning of children */
+            overflow: hidden; /* Hide ornament overflow */
+            z-index: 1; /* Ensure header content is above background */
+        }
+
+        /* Header Ornament SVG Styling */
+        #header-ornament {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 70vw; /* Make it large relative to viewport width */
+            height: 70vh; /* Make it large relative to viewport height */
+            max-width: 800px; /* Optional max width */
+            max-height: 800px; /* Optional max height */
+            transform: translate(-50%, -50%); /* Center the ornament */
+            z-index: -1; /* Place behind header text but above staff background */
+            opacity: 0.15; /* Make it semi-transparent */
+            pointer-events: none; /* Prevent interaction */
+            color: var(--ornament-color); /* Use variable for color */
+        }
+
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 3.5rem); /* Responsive font size */
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            max-width: 900px;
+            color: var(--ink);
+            position: relative; /* Ensure text is above ornament */
+            z-index: 1;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 2.5rem); /* Responsive font size */
+            margin: 4rem 0 1.5rem; /* Increased top margin */
+            border-bottom: 1px solid var(--sepia);
+            padding-bottom: 0.5rem;
+            color: var(--ink);
+        }
+
+        h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.5rem, 4vw, 1.8rem); /* Responsive font size */
+            margin: 2rem 0 1rem;
+            color: var(--accent); /* Accent color for H3 */
+        }
+
+        h4 {
+            font-family: 'Playfair Display', serif;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .subtitle {
+            font-family: 'Source Sans Pro', sans-serif; /* Sans-serif for subtitle */
+            font-weight: 300;
+            font-size: clamp(1.1rem, 3vw, 1.5rem); /* Responsive font size */
+            margin-bottom: 2rem;
+            max-width: 700px;
+            color: var(--ink);
+            opacity: 0.9;
+            position: relative; /* Ensure text is above ornament */
+            z-index: 1;
+        }
+
+        /* Waveform Animation (from second snippet) */
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px; /* Adjusted height */
+            padding: 10px 0;
+            margin-bottom: 3rem; /* Space before scroll indicator */
+            position: relative; /* Ensure waveform is above ornament */
+            z-index: 1;
+        }
+
+        .waveform-bar {
+            background-color: var(--accent);
+            width: 4px; /* Slightly thinner */
+            margin: 0 2px;
+            border-radius: 3px;
+            animation: sound 0s -0.8s linear infinite alternate;
+        }
+
+        @keyframes sound {
+            0% { height: 5px; opacity: 0.5; }
+            100% { height: 60px; opacity: 1; } /* Adjusted max height */
+        }
+
+        /* Staggered animation durations */
+        .waveform-bar:nth-child(1) { animation-duration: 0.7s; }
+        .waveform-bar:nth-child(2) { animation-duration: 1.2s; }
+        .waveform-bar:nth-child(3) { animation-duration: 1.5s; }
+        .waveform-bar:nth-child(4) { animation-duration: 0.9s; }
+        .waveform-bar:nth-child(5) { animation-duration: 1.1s; }
+        .waveform-bar:nth-child(6) { animation-duration: 0.8s; }
+        .waveform-bar:nth-child(7) { animation-duration: 1.3s; }
+        .waveform-bar:nth-child(8) { animation-duration: 1.0s; }
+        .waveform-bar:nth-child(9) { animation-duration: 1.4s; }
+        .waveform-bar:nth-child(10) { animation-duration: 0.6s; }
+        .waveform-bar:nth-child(11) { animation-duration: 1.1s; }
+        .waveform-bar:nth-child(12) { animation-duration: 0.9s; }
+
+        /* Scroll Indicator (from second snippet) */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            animation: bounce 2s infinite;
+            opacity: 0.7;
+            color: var(--ink);
+            z-index: 1; /* Ensure indicator is above ornament */
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); } /* Reduced bounce height */
+            60% { transform: translateY(-7px); }
+        }
+
+        /* Main Content Container */
+        .container {
+            max-width: 900px; /* Adjusted max-width */
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative; /* Ensure main content is above fixed background */
+            z-index: 1;
+            background-color: var(--parchment); /* Need background color to obscure staff lines */
+        }
+
+        /* Section Styling & Animation */
+        section {
+            margin: 6rem 0;
+            opacity: 0;
+            transform: translateY(40px); /* Slightly increased initial offset */
+            transition: opacity 0.9s ease-out, transform 0.9s ease-out;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Grid Layout for Cards (from second snippet) */
+        .grid-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjusted minmax */
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        #relevance .grid-section {
+            grid-template-columns: 1fr; /* Ensure cards in this section are full width */
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.07); /* Slightly softer shadow */
+            padding: 1.5rem 2rem; /* Adjusted padding */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #eee; /* Subtle border */
+        }
+
+        .card:hover {
+            /* transform: translateY(-5px); */ /* Removed vertical shift */
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15); /* Enhanced shadow */
+        }
+        .card h3 {
+            margin-top: 0; /* Remove top margin for H3 inside cards */
+        }
+
+        /* Methodology Section Card Layout & Connectors */
+        #methodology .grid-section {
+            grid-template-columns: 1fr; /* Stack cards in a single column */
+            /* Inherits gap: 2rem from general .grid-section style */
+        }
+
+        .card-container {
+            position: relative; /* Anchor for the connector icon */
+        }
+
+        .connector-wrapper {
+            position: absolute;
+            bottom: -1rem; /* (gap is 2rem, so -1rem is middle of gap from card bottom) */
+            left: 50%;
+            transform: translate(-50%, 50%); /* Center horizontally, and shift down by half of icon's height */
+            z-index: 10;
+        }
+
+        .connector-icon {
+            font-size: 1.5rem; /* Size of the Font Awesome icon */
+            color: var(--accent);
+            background-color: var(--parchment);
+            padding: 0.5em; /* Space between FA icon and circle edge */
+            border-radius: 50%;
+            width: 2.5em;  /* Total width of the circle (1.5em icon + 2 * 0.5em padding) */
+            height: 2.5em; /* Total height of the circle */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        /* Timeline Styling (from second snippet) */
+        .timeline {
+            position: relative;
+            margin: 3rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            width: 2px;
+            background-color: var(--sepia);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -1px;
+            z-index: 0; /* Ensure it's behind content */
+        }
+
+        .timeline-item {
+            padding: 1rem 0; /* Vertical padding only */
+            position: relative;
+            width: 50%;
+            margin-bottom: 2rem;
+            z-index: 1; /* Ensure content is above line */
+        }
+        /* Position items left/right */
+        .timeline-item:nth-child(odd) {
+            left: 0;
+            padding-right: 2rem; /* Space from center line */
+        }
+        .timeline-item:nth-child(even) {
+            left: 50%;
+            padding-left: 2rem; /* Space from center line */
+        }
+
+        .timeline-content {
+            padding: 1.5rem;
+            background-color: white;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+        .timeline-content h4 { /* Timeline date style */
+             margin-bottom: 0.5rem;
+        }
+        .timeline-content strong { /* Style for milestone labels */
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Timeline connector arrows */
+        .timeline-item:nth-child(odd) .timeline-content::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: -10px; /* Position arrow pointing right */
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border: 1px solid #eee;
+            border-left: none; /* Hide left border */
+            border-top: none; /* Hide top border */
+            transform: rotate(45deg);
+            z-index: -1; /* Behind content */
+        }
+
+        .timeline-item:nth-child(even) .timeline-content::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: -10px; /* Position arrow pointing left */
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border: 1px solid #eee;
+            border-right: none; /* Hide right border */
+            border-bottom: none; /* Hide bottom border */
+            transform: rotate(45deg);
+            z-index: -1; /* Behind content */
+        }
+
+        .timeline > .card {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Flowchart Styling */
+        .flowchart-container {
+            width: 100%;
+            margin: 2rem 0;
+            text-align: center;
+            overflow-x: auto; /* Allow horizontal scroll if needed */
+        }
+        .flowchart-container svg {
+             max-width: 100%;
+             height: auto;
+        }
+
+        /* Mockup Styling (from second snippet) */
+        .mockup-container {
+            background-color: var(--light-accent);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 3rem 0;
+            border: 1px solid var(--sepia);
+        }
+        .mockup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 0.5rem;
+        }
+
+        /* Styles for the title section within the mockup */
+        .mockup-title-header {
+            text-align: left; /* Changed to left alignment */
+            max-width: 600px; /* Constrain width */
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1.5rem 2rem; /* Add horizontal padding */
+            margin-bottom: 1rem; /* Reduced bottom margin */
+            border-bottom: 1px solid var(--sepia);
+        }
+
+        .mockup-title-label { /* "Currently Exploring" */
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 0.8rem; /* Even smaller */
+            font-weight: 400;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px; /* Tighter spacing */
+            margin-bottom: 0.5rem;
+        }
+
+        .mockup-title-composer {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem; /* Larger */
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0; /* Tight to piece */
+            line-height: 1.1;
+        }
+
+        .mockup-title-piece {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem; /* Main focus */
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 0.2rem;
+            line-height: 1.05; /* Very tight */
+        }
+
+        .mockup-title-movement {
+            font-family: 'Lora', serif;
+            font-size: 1rem;
+            font-style: italic;
+            color: #555; /* Darker for contrast */
+            margin-top: 0.1rem;
+        }
+        #playhead-label {
+            font-family: 'Lora', serif !important;
+            font-size: 0.4rem !important;  /* Reverted font size */
+            font-weight: 600 !important;   /* Matching target weight */
+            fill: #777 !important;
+            user-select: none;
+            pointer-events: none;
+        }
+        .interpretive-variance-label-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px; /* Width for the vertical text area */
+            padding-right: 4px; /* Space between label and graph content */
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .interpretive-variance-label-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg); /* Makes text read bottom-to-top */
+            white-space: nowrap;
+            font-size: 0.85rem !important; /* Made even bigger */
+            color: #666 !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 400;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+        .graph-content-area {
+            flex-grow: 1;
+            position: relative; /* For absolute positioning of explore-moment and timestamps */
+        }
+        .graph-timestamp {
+            position: absolute;
+            bottom: 2px; /* Moved even lower */
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 0.75rem;
+            color: #666;
+            user-select: none;
+            pointer-events: none;
+        }
+        .graph-timestamp::before {
+            content: '';
+            position: absolute;
+            bottom: 100%; /* Position it right above the text */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 3px; /* Shorter line */
+            background-color: #666; /* Match text color */
+            margin-bottom: 0px; /* Line closer to text */
+        }
+        .graph-timestamp.bottom-left {
+            left: 5px;
+        }
+        .graph-timestamp.bottom-right {
+            right: 5px;
+        }
+        .album-art-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            margin: 0 auto 8px;
+            display: block;
+            object-fit: cover; /* Ensures image covers the area nicely */
+            background-color: #eee; /* Fallback if image fails to load */
+        }
+
+        .mockup-header h3 { margin: 0; }
+        .mockup-visualizer {
+            background-color: white;
+            border-radius: 8px;
+            min-height: 350px; /* Adjusted height */
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 0.5rem 1.5rem; /* Padding inside visualizer - reduced top/bottom */
+            display: flex; /* Use flex for layout */
+            flex-direction: column;
+            gap: 1rem; /* Space between elements */
+            border: 1px solid #ddd;
+        }
+        .mockup-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem; /* Increased space */
+        }
+        .mockup-button {
+            font-family: 'Source Sans Pro', sans-serif;
+            background-color: white;
+            border: 1px solid var(--sepia);
+            border-radius: 20px; /* Pill shape */
+            padding: 0.6rem 1.2rem; /* Adjusted padding */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .mockup-button:hover {
+            background-color: var(--sepia);
+            color: white;
+            border-color: var(--ink);
+        }
+        /* Placeholder styles within mockup */
+        .mockup-placeholder-section {
+             border: 1px dashed var(--sepia);
+             border-radius: 6px;
+             padding: 1rem;
+             background-color: #fcfaf6;
+             flex-grow: 1; /* Allow sections to grow */
+        }
+         .mockup-placeholder-section h5 {
+             font-family: 'Lora', serif;
+             font-weight: bold;
+             color: var(--accent);
+             margin-bottom: 0.5rem;
+             font-size: 0.9rem;
+             text-transform: uppercase;
+             letter-spacing: 0.5px;
+         }
+         .mockup-placeholder-section p, .mockup-placeholder-section li {
+             font-size: 0.9rem;
+             color: #555;
+         }
+         .mockup-placeholder-section ul {
+             list-style: none;
+             padding: 0;
+         }
+          .mockup-placeholder-section li {
+             display: flex;
+             align-items: center;
+             gap: 8px; /* Space between color dot and text */
+             margin-bottom: 4px;
+         }
+         .color-dot {
+             width: 10px;
+             height: 10px;
+             border-radius: 50%;
+             display: inline-block;
+         }
+
+        /* Literature Review Styling (from second snippet) */
+        .lit-review-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            margin-top: 2rem;
+        }
+        .lit-review-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--sepia);
+        }
+        .lit-review-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .lit-review-item h3 { margin-top: 0; }
+        .lit-review-item i { /* Style for citation hints */
+             font-family: 'Source Sans Pro', sans-serif;
+             font-size: 0.9em;
+             color: #666;
+        }
+
+
+        /* Qualifications Styling (from second snippet) */
+        .qualifications-section {
+            background-color: var(--light-accent);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            border: 1px solid var(--sepia);
+        }
+        .qualifications-list, .musical-list {
+            list-style-type: none;
+            padding-left: 0; /* Remove default padding */
+            margin-bottom: 1.2rem; /* Reduced bottom margin for tighter spacing */
+            margin-top: 0.8rem; /* Controlled top margin */
+        }
+        .qualifications-list li, .musical-list li {
+            margin-bottom: 0.9rem; /* Tighter spacing between list items */
+            padding-left: 2rem; /* Increased padding for better alignment */
+            position: relative;
+            line-height: 1.6; /* Slightly tighter line height */
+        }
+        .qualifications-list li::before, .musical-list li::before {
+            content: '♪'; /* Musical note icon */
+            position: absolute;
+            left: 0;
+            top: 0.1em; /* Slight vertical adjustment for better alignment */
+            color: var(--accent);
+            font-size: 1.3em; /* Slightly larger icon */
+            line-height: 1.4; /* Better alignment with text */
+            font-weight: normal;
+        }
+        
+        /* Enhanced spacing for sections with musical lists */
+        .musical-list-section {
+            margin-bottom: 2.5rem; /* Increased section spacing */
+        }
+        
+        .musical-list-section p {
+            margin-bottom: 1rem; /* Reduced spacing before lists for tighter feel */
+        }
+        
+        .musical-list-section .musical-list + p {
+            margin-top: 1.2rem; /* Consistent spacing after lists */
+        }
+        
+        /* Specific spacing improvements for card content with musical lists */
+        .card .musical-list {
+            margin-top: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+        
+        .card p + .musical-list {
+            margin-top: 0.6rem; /* Tighter spacing after paragraph in cards */
+        }
+
+        /* General List Styling */
+        ul, ol {
+            padding-left: 1.5rem; /* Standard indentation */
+            margin-bottom: 1rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Blockquote Styling */
+        blockquote {
+            border-left: 4px solid var(--accent); /* Use accent color */
+            padding-left: 1.5rem;
+            margin: 1.5rem 0 1.5rem 1rem; /* Adjusted margin */
+            font-style: italic;
+            color: #555; /* Slightly darker italic text */
+        }
+
+        /* Footer Styling (from second snippet) */
+        footer {
+            text-align: center;
+            padding: 2.5rem 1rem; /* Adjusted padding */
+            background-color: var(--sepia);
+            margin-top: 6rem;
+            color: var(--ink);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* Audio Control Styles */
+        #audio-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000; /* Ensure it's above everything */
+            cursor: pointer;
+            font-size: 1.8rem; /* Adjust icon size */
+            color: var(--accent);
+            background-color: rgba(249, 246, 240, 0.7); /* Semi-transparent parchment */
+            padding: 8px 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        #audio-control:hover {
+            background-color: rgba(249, 246, 240, 0.9); /* Less transparent on hover */
+        }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+             /* Adjust ornament size on smaller screens */
+            #header-ornament {
+                width: 90vw;
+                height: 60vh;
+            }
+
+            .timeline::before {
+                left: 20px; /* Adjust line position for mobile */
+                margin-left: 0;
+            }
+            .timeline-item {
+                width: 100%;
+                left: 0 !important; /* Force all items to left */
+                padding-left: 3rem; /* Space for icon/arrow */
+                padding-right: 0;
+            }
+            /* Adjust arrow position for all items on mobile */
+            .timeline-item:nth-child(odd) .timeline-content::after,
+            .timeline-item:nth-child(even) .timeline-content::after {
+                left: -10px; /* Point left */
+                right: auto;
+                border-left: 1px solid #eee; /* Add back border */
+                border-bottom: 1px solid #eee;
+                border-right: none;
+                border-top: none;
+            }
+
+            .mockup-header {
+                 flex-direction: column;
+                 align-items: flex-start;
+            }
+            .grid-section {
+                grid-template-columns: 1fr; /* Stack cards on mobile */
+            }
+             #audio-control { font-size: 1.5rem; top: 15px; right: 15px; } /* Adjust icon for smaller screens */
+        }
+
+        @media (max-width: 480px) {
+             #audio-control { font-size: 1.3rem; top: 10px; right: 10px; } /* Further adjust icon */
+        }
+
+/* Publication Venues Highlight Section */
+        .publication-venues-section {
+            background-color: var(--light-accent); /* Using a light accent for highlight */
+            border: 1px solid var(--sepia);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem; /* Space before the main literature review items */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .publication-venues-section h4 {
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--sepia);
+            padding-bottom: 0.5rem;
+            font-family: 'Playfair Display', serif; /* Consistent heading font */
+            font-size: 1.3rem; /* Slightly smaller than H3 */
+        }
+
+        .publication-venues-section p {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .publication-venues-section ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .publication-venues-section li {
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .publication-venues-section li strong {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+            color: var(--ink);
+        }
+/* Expandable Table for Literature Review */
+        .expandable-table {
+            margin: 2rem 0;
+        }
+
+        .expandable-table summary {
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem; /* Reduced size */
+            color: var(--accent);
+            margin-bottom: 0;
+            padding: 0.6rem 1rem; /* Reduced padding */
+            background-color: var(--light-accent);
+            border: 1px solid var(--sepia);
+            border-radius: 6px;
+            list-style-position: inside;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            outline: none;
+        }
+
+        .expandable-table summary:hover {
+            background-color: var(--sepia);
+            color: white;
+        }
+
+        .expandable-table[open] summary {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border-bottom: none;
+        }
+
+        .expandable-table .table-content-wrapper {
+            border: 1px solid var(--sepia);
+            border-top: none;
+            padding: 1rem; /* Reduced padding */
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            background-color: white;
+            overflow-x: auto; /* Allow horizontal scroll on small screens */
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out;
+        }
+
+        .expandable-table[open] .table-content-wrapper {
+            max-height: none; /* Remove height restriction when open */
+            opacity: 1;
+            overflow-x: auto; /* Allow horizontal scroll when open */
+            overflow-y: visible; /* Allow vertical content to show */
+        }
+
+        /* Smooth animation for the details element */
+        .expandable-table details {
+            transition: all 0.3s ease;
+        }
+
+        .literature-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem; /* Significantly reduced font size */
+            line-height: 1.3; /* Tighter line height */
+        }
+
+        .literature-table th, .literature-table td {
+            border: 1px solid var(--sepia);
+            padding: 0.4rem 0.5rem; /* Reduced padding */
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .literature-table th {
+            background-color: #fdfbf6;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+            color: var(--ink);
+            font-size: 0.7rem; /* Even smaller for headers */
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .literature-table caption {
+            caption-side: bottom;
+            text-align: left;
+            margin-top: 1rem; /* Reduced margin */
+            padding: 0.5rem 0; /* Reduced padding */
+            font-size: 0.8rem; /* Slightly larger than table text */
+            color: var(--ink);
+            font-family: 'Source Sans Pro', sans-serif;
+            line-height: 1.4;
+            border-top: 1px solid var(--sepia);
+        }
+
+        .table-footnotes {
+            margin-top: 1rem; /* Reduced margin */
+            font-size: 0.75rem; /* Smaller footnotes */
+            font-family: 'Source Sans Pro', sans-serif;
+            color: var(--ink);
+            line-height: 1.3;
+        }
+        .table-footnotes p {
+            margin-bottom: 0.3rem;
+        }
+
+        /* Color highlights - made more noticeable */
+        .highlight-green {
+            color: #2a5c17; /* Darker green text */
+            font-weight: 600;
+            background-color: #eaf5e6; /* Light green background */
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .highlight-red {
+            color: #8b2942; /* var(--accent) */
+            font-weight: 600;
+            background-color: #fce8ec; /* Light red/pink background */
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .highlight-blue {
+            color: #163768; /* Darker blue text */
+            font-weight: 600;
+            background-color: #e8eef7; /* Light blue background */
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        /* Specific column styling - more compact */
+        .literature-table .col-year,
+        .literature-table .col-recordings {
+            text-align: center;
+            white-space: nowrap;
+            width: 6%; /* Reduced width */
+            font-weight: 600;
+        }
+        .literature-table .col-author {
+            width: 12%; /* Reduced width */
+            min-width: 80px;
+        }
+        .literature-table .col-journal {
+            width: 16%; /* Reduced width */
+            min-width: 100px;
+        }
+        .literature-table .col-type {
+            width: 14%; /* Reduced width */
+            min-width: 90px;
+        }
+        .literature-table .col-subject {
+            width: 30%; /* Increased to accommodate content */
+            min-width: 150px;
+        }
+        .literature-table .col-process {
+            width: 22%; /* Reduced width */
+            min-width: 120px;
+        }
+
+        /* Abbreviations and compact text styling */
+        .abbr {
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 1px dotted var(--sepia);
+        }
+
+        /* Mobile responsiveness for table */
+        @media (max-width: 768px) {
+            .literature-table {
+                font-size: 0.7rem;
+            }
+            .literature-table th, .literature-table td {
+                padding: 0.3rem 0.4rem;
+            }
+            .expandable-table .table-content-wrapper {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Audio (starts muted) -->
+    <audio id="background-waltz" loop muted>
+        <source src="audio/waltz recording rough v1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Audio Control Icon (starts muted) -->
+    <div id="audio-control">
+        <i class="fas fa-volume-mute"></i> <!-- Initial icon (muted) -->
+    </div>
+
+    <div class="staff-background">
+        <div class="staff-line" style="top: 20%"></div>
+        <div class="staff-line" style="top: 28%"></div>
+        <div class="staff-line" style="top: 36%"></div>
+        <div class="staff-line" style="top: 44%"></div>
+        <div class="staff-line" style="top: 52%"></div>
+        </div>
+
+    <header>
+        <svg id="header-ornament" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+            <path d="M100 10 C 80 30, 70 60, 80 80 C 90 100, 110 100, 120 80 C 130 60, 120 30, 100 10 Z
+                     M100 190 C 120 170, 130 140, 120 120 C 110 100, 90 100, 80 120 C 70 140, 80 170, 100 190 Z
+                     M10 100 C 30 80, 60 70, 80 80 C 100 90, 100 110, 80 120 C 60 130, 30 120, 10 100 Z
+                     M190 100 C 170 120, 140 130, 120 120 C 100 110, 100 90, 120 80 C 140 70, 170 80, 190 100 Z
+                     M50 50 C 60 40, 75 45, 80 60 C 85 75, 75 90, 60 90 C 45 90, 35 75, 40 60 C 45 45, 40 40, 50 50 Z
+                     M150 50 C 160 40, 175 45, 180 60 C 185 75, 175 90, 160 90 C 145 90, 135 75, 140 60 C 145 45, 140 40, 150 50 Z
+                     M50 150 C 60 160, 75 155, 80 140 C 85 125, 75 110, 60 110 C 45 110, 35 125, 40 140 C 45 155, 40 160, 50 150 Z
+                     M150 150 C 160 160, 175 155, 180 140 C 185 125, 175 110, 160 110 C 145 110, 135 125, 140 140 C 145 155, 140 160, 150 150 Z
+                     " fill-rule="evenodd"/>
+            </svg>
+
+        <!-- <h1>Algorithmic Vistas: Exploring Classical Piano Interpretation</h1> -->
+        <!-- <h1>Methodological Horizons towards Exploration of Individual Musical Interpretation & the Future Vitality of Classical Music</h1> -->
+         <h1>Algorithmic Pathways towards the Exploration of Musical Interpretation</h1>
+        <p class="subtitle">A PhD research proposal to develop computational methodologies for novel engagement in comparative listening</p>
+        <div class="waveform">
+            <div class="waveform-bar"></div> <div class="waveform-bar"></div> <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div> <div class="waveform-bar"></div> <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div> <div class="waveform-bar"></div> <div class="waveform-bar"></div>
+            <div class="waveform-bar"></div> <div class="waveform-bar"></div> <div class="waveform-bar"></div>
+        </div>
+        <div class="scroll-indicator">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <section id="introduction">
+            <h2>I. Introduction</h2>
+            <p>Classical music, particularly the piano repertoire, thrives on the nuance of interpretation. The same score yields vastly different experiences in the hands of different artists across time. While the practice of comparative listening - contrasting different interpretations - is central to deep appreciation and learning, it faces significant hurdles. Human listeners are invariably limited by time, effort, attention span, memory, and cognitive biases when attempting to perceive differences across numerous recordings.</p>
+            <br>
+            <p>Furthermore, the sheer scale of available recordings presents a daunting challenge: hundreds of acclaimed interpretations exist for countless pieces, making thorough manual comparison practically impossible, especially for longer works. This proposal outlines a PhD project aimed at overcoming these limitations by developing a novel machine learning methodology coupled with an intuitive interface to facilitate the exploration and enjoyment of the rich variety of classical piano recordings at scale.</p>
+            <br>
+            <p>The goal is not merely technological advancement, but to deepen our connection to musical artistry, making the profound experience of comparative listening more accessible and fostering a renewed appreciation for classical music.</p>
+        </section>
+
+        <section id="relevance">
+             <h2>II. Goals & Significance</h2>
+             <p>This research addresses a critical intersection of artistic tradition, technological opportunity, and cultural imperative. Its significance is multifaceted, contributing to several key domains:</p>
+             <div class="grid-section">
+                 <div class="card">
+                     <h3>Enhancing Musical Experience, Engagement, and Cultural Connection</h3>
+                     <p>This project aims to deepen the artistic experience for musicians and scholars by providing tools to explore expressive nuances in performance, fostering new analytical perspectives and enriching interpretation. Furthermore, it seeks to foster broader listener engagement through intuitive interfaces that make complex musical subtleties more accessible and enjoyable. By offering a new lens for appreciating diverse musical traditions, the research also contributes to their cultural revitalization, making unique characteristics more tangible and supporting their preservation.</p>
+                 </div>
+                 <div class="card">
+                     <h3>Advancing Music Information Retrieval (MIR)</h3>
+                     <p>This research will contribute to the field of Music Information Retrieval by forging new methodologies for the nuanced comparative analysis of musical performances. It tackles the sophisticated challenge of algorithmically identifying and characterizing subtle interpretive differences, thereby pushing the current boundaries of computational musicology.</p>
+                 </div>
+                 <div class="card">
+                     <h3>Establishing Broader Scholarly Relevance</h3>
+                     <p>The broader scholarly relevance of this project lies in its timely and innovative response to the challenges and opportunities presented by large-scale digital music archives. It addresses a critical need for sophisticated tools that can help navigate and extract meaning from this vast interpretive landscape - a task for which human cognition has inherent limitations, but for which current technological capabilities, particularly in machine learning, offer unprecedented and promising solutions.</p>
+                 </div>
+                 <div class="card">
+                     <h3>Enhancing Music Pedagogy</h3>
+                     <p>This research offers substantial pedagogical potential by equipping music students and educators with powerful new analytical tools for the study of performance practice. The capacity to efficiently compare and deconstruct diverse interpretations promises to significantly enhance critical listening skills and foster a more profound understanding of musical artistry and interpretive traditions.</p>
+                 </div>
+                 <div class="card">
+                     <h3>Addressing Ethical Dimensions</h3>
+                     <p>The project acknowledges and proactively addresses the key ethical dimensions inherent in music technology research. Diligent consideration will be afforded to issues of copyright, data provenance, performer attribution, and the potential for algorithmic bias, ensuring responsible innovation and ethically sound deployment of the developed tools.</p>
+                 </div>
+             </div>
+        </section>
+
+         <section id="research-questions">
+            <h2>III. Research Questions</h2>
+            <ol>
+                <li>How can machine learning methodologies effectively detect, quantify, and characterize interpretive differences (e.g., timing, dynamics, articulation, phrasing) between performances of the same classical piano composition, scalable to large datasets?</li>
+                <li>What visualization and interaction paradigms, integrated with audio playback, best communicate these nuanced interpretive differences to both expert and novice listeners in an engaging and informative manner?</li>
+                <li>How can an interactive comparative listening tool be designed to encourage exploration, discovery, and deeper engagement with the classical piano repertoire, potentially overcoming barriers faced by new listeners?</li>
+                <li>What are the potential further applications and impacts of such computational tools, potentially in music education settings (for teaching performance practice and listening skills), in an expansion to other genres and forms of music, or in the deeper analysis of the psychological workings of musical expression and experience?</li>
+            </ol>
+        </section>
+
+        <section id="methodology">
+            <h2>IV. Proposed Methodology</h2>
+            <p>This research employs a mixed-methods approach, combining computational analysis with human-centered design and evaluation.</p>
+            <div class="grid-section">
+                <div class="card-container">
+                    <div class="card">
+                        <h3>1. Machine Learning Core</h3>
+                        <p>Develop a pipeline for:</p>
+                        <ul class="musical-list">
+                            <li>Precise audio alignment to compare equivalent passages despite tempo and dynamic variations.</li>
+                            <li>Extraction of musically relevant features primarily focused on timing and dynamics (volume), approximating MIDI-like data capture.</li>
+                            <li>Difference modeling using techniques like contrastive learning, attention mechanisms, Bayesian methods (e.g., inspired by Guichaoua et al., 2024), or specialized network architectures to identify and quantify interpretive variations.</li>
+                            <li>Ensuring scalability for large recording datasets like MazurkaBL (Kosa et al., 2018) or beyond.</li>
+                        </ul>
+                    </div>
+                    <div class="connector-wrapper">
+                        <div class="connector-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-container">
+                    <div class="card">
+                        <h3>2. Exploration Tool</h3>
+                        <p>Design and build an interactive web interface featuring:</p>
+                        <ul class="musical-list">
+                            <li>Intuitive recording selection and comparison setup.</li>
+                            <li>Novel visualizations synchronized with audio playback (e.g., comparative timelines, dynamic contours, feature highlighting inspired by Cook (2007) or Zhou & Fabian (2021) but automated and interactive).</li>
+                            <li>Navigation based on similarity or specific performance characteristics, potentially outliers or clusters of interpretations.</li>
+                            <li>Ability to seamlessly play contrasting interpretations in key moments, to empower an immediacy and clarity of understanding and enjoyment.</li>
+                        </ul>
+                    </div>
+                    <div class="connector-wrapper">
+                        <div class="connector-icon">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-container">
+                    <div class="card">
+                        <h3>3. Evaluation</h3>
+                         <p>Assess the system through:</p>
+                         <ul class="musical-list">
+                             <li>Quantitative evaluation of ML model accuracy against ground truth or established datasets.</li>
+                             <li>Qualitative and quantitative user studies with diverse participants (novices, experts, educators) to evaluate the frontend's usability, effectiveness, and impact on engagement, perhaps drawing inspiration from Repp's (1997) experimental approach but focused on the tool.</li>
+                             <li>Case studies exploring further pedagogical applications, uses in other genres, benefits to music appreciation, and theories about the art of music itself.</li>
+                         </ul>
+                    </div>
+                    <!-- No connector after the last card -->
+                </div>
+            </div>
+        </section>
+
+        <section id="mockup">
+             <h2>V. Envisioning the Interface</h2>
+             <p>A rough look at one possible design for an eventual interface. You can click and drag the playhead to the climax, where the peak detected difference exists between the recordings, and see the listening options appear.</p>
+            <div class="mockup-container">
+                <div class="mockup-title-header">
+                    <div class="mockup-title-label">Currently Exploring</div>
+                    <div class="mockup-title-composer">Rachmaninoff</div>
+                    <div class="mockup-title-piece">Piano Sonata No. 2</div>
+                    <div class="mockup-title-movement">2nd Movement</div>
+                </div>
+                <div class="mockup-visualizer">
+                    <div class="mockup-placeholder-section" style="height: 68%; position: relative; display: flex; flex-direction: row; align-items: stretch;">
+                        <div class="interpretive-variance-label-container">
+                            <span class="interpretive-variance-label-text">Interpretive Variance</span>
+                        </div>
+                        <div class="graph-content-area">
+                            <div id="explore-moment" style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: var(--accent); font-weight: 600; opacity: 0; transition: opacity 0.3s ease;">Explore this moment</div>
+                            
+                            <!-- Hidden slider for functionality -->
+                            <input type="range" id="timeline-slider" min="0" max="300" value="50" style="position: absolute; opacity: 0; pointer-events: none; width: 100%;">
+                            
+                            <svg width="100%" height="80%" viewBox="0 0 300 100" preserveAspectRatio="none" style="margin-top: 10px; cursor: pointer;" id="timeline-svg">
+                                 <!-- Median recording range - thicker grey line -->
+                                 <path d="M0,30 C50,32 100,28 150,30 C200,32 250,28 300,30" stroke="#888" fill="none" stroke-width="8" opacity="0.5"/>
+                                 <!-- Individual interpretations - thinner with more curve variation -->
+                                 <path d="M0,30 C30,22 80,8 150,5 C180,12 220,28 300,35" stroke="var(--accent)" fill="none" stroke-width="1.5"/>
+                                 <path d="M0,30 C40,38 90,52 150,55 C190,45 240,32 300,25" stroke="#8b6029" fill="none" stroke-width="1.5"/>
+                                 <path d="M0,30 C25,26 70,42 150,45 C200,18 260,15 300,20" stroke="#298b6a" fill="none" stroke-width="1.5"/>
+                                 <!-- Interactive draggable playhead -->
+                                 <line id="playhead" x1="50" y1="0" x2="50" y2="83" stroke="var(--accent)" stroke-width="3" stroke-dasharray="4,4" style="cursor: grab;"/>
+                                 <!-- Invisible wider hit area for easier dragging -->
+                                 <line id="playhead-hitarea" x1="50" y1="0" x2="50" y2="83" stroke="transparent" stroke-width="15" style="cursor: grab;"/>
+                                 <!-- Playhead Label -->
+                                 <text id="playhead-label" x="50" y="77" text-anchor="middle" dominant-baseline="middle">Click ▪ & drag</text>
+                             </svg>
+                            <div class="graph-timestamp bottom-left">3:25</div>
+                            <div class="graph-timestamp bottom-right">4:17</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; height: 27%;">
+                        <div class="mockup-placeholder-section" style="flex: 1;">
+                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.75rem;">
+                                 <span class="color-dot" style="background-color: #888; opacity: 0.6;"></span>
+                                 <span style="color: #666; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500;">MEDIAN RECORDING RANGE</span>
+                             </div>
+                             <ul>
+                                 <li><span class="color-dot" style="background-color: var(--accent);"></span>Arthur Rubinstein (1937)</li>
+                                 <li><span class="color-dot" style="background-color: #8b6029;"></span>Vladimir Horowitz (1957)</li>
+                                 <li><span class="color-dot" style="background-color: #298b6a;"></span>Maria João Pires (1996)</li>
+                             </ul>
+                        </div>
+                        <div id="recordings-section" class="mockup-placeholder-section" style="flex: 2; opacity: 0; transition: opacity 0.4s ease;">
+                             <div style="display: flex; gap: 0.8rem; justify-content: space-between;">
+                                 <!-- Rubinstein -->
+                                 <div style="text-align: center; flex: 1;">
+                                     <img src="album rubinstein.jpg" alt="Album art for Rubinstein" class="album-art-img">
+                                     <div style="font-weight: 600; font-size: 0.8rem; margin-bottom: 2px;">Arthur Rubinstein</div>
+                                     <div style="font-size: 0.7rem; color: #666; margin-bottom: 4px;">1937</div>
+                                     <div style="font-size: 0.7rem; color: var(--accent); cursor: pointer; border: 1px solid var(--sepia); border-radius: 12px; padding: 2px 8px; background: rgba(139, 41, 66, 0.05); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(139, 41, 66, 0.1)'" onmouseout="this.style.background='rgba(139, 41, 66, 0.05)'">Click to listen</div>
+                                 </div>
+                                 <!-- Horowitz -->
+                                 <div style="text-align: center; flex: 1;">
+                                     <img src="album horowitz.webp" alt="Album art for Horowitz" class="album-art-img">
+                                     <div style="font-weight: 600; font-size: 0.8rem; margin-bottom: 2px;">Vladimir Horowitz</div>
+                                     <div style="font-size: 0.7rem; color: #666; margin-bottom: 4px;">1957</div>
+                                     <div style="font-size: 0.7rem; color: var(--accent); cursor: pointer; border: 1px solid var(--sepia); border-radius: 12px; padding: 2px 8px; background: rgba(139, 41, 66, 0.05); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(139, 41, 66, 0.1)'" onmouseout="this.style.background='rgba(139, 41, 66, 0.05)'">Click to listen</div>
+                                 </div>
+                                 <!-- Pires -->
+                                 <div style="text-align: center; flex: 1;">
+                                     <img src="album pires.jpg" alt="Album art for Pires" class="album-art-img">
+                                     <div style="font-weight: 600; font-size: 0.8rem; margin-bottom: 2px;">Maria João Pires</div>
+                                     <div style="font-size: 0.7rem; color: #666; margin-bottom: 4px;">1996</div>
+                                     <div style="font-size: 0.7rem; color: var(--accent); cursor: pointer; border: 1px solid var(--sepia); border-radius: 12px; padding: 2px 8px; background: rgba(139, 41, 66, 0.05); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(139, 41, 66, 0.1)'" onmouseout="this.style.background='rgba(139, 41, 66, 0.05)'">Click to listen</div>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="literature">
+            <h2>VI. Review of Literature</h2>
+            <p>This project builds upon decades of research evolving from manual analysis to sophisticated computational methods in Music Information Retrieval (MIR), audio signal processing, machine learning, and computational musicology. Early efforts often involved manual data creation, while recent work has finally begun leveraging algorithmic processing and large datasets.</p>
+ 
+            <details class="expandable-table" open>
+                <summary>Table 1: Selected Literature on Music Data Analysis</summary>
+                <div class="table-content-wrapper">
+                    <table class="literature-table">
+                        <thead>
+                            <tr>
+                                <th class="col-author">Author(s)</th>
+                                <th class="col-journal">Venue</th>
+                                <th class="col-year">Year</th>
+                                <th class="col-type">Type</th>
+                                <th class="col-subject">Subject & Repertoire</th>
+                                <th class="col-recordings"># Rec.</th>
+                                <th class="col-process">Methodology</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="col-author">Repp</td>
+                                <td class="col-journal">Music Perception</td>
+                                <td class="col-year">1997</td>
+                                <td class="col-type"><span class="highlight-green">experiment</span></td>
+                                <td class="col-subject">Piano: Schumann & Chopin (non-mazurkas)</td>
+                                <td class="col-recordings">41</td>
+                                <td class="col-process"><span class="highlight-red">Manual</span></td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Cook</td>
+                                <td class="col-journal">Musicae Scientiae</td>
+                                <td class="col-year">2007</td>
+                                <td class="col-type">Method + Case</td>
+                                <td class="col-subject">Piano: <span class="highlight-green">Chopin mazurkas</span> (2 pieces)</td>
+                                <td class="col-recordings">50</td>
+                                <td class="col-process"><span class="highlight-red">Manual</span> + <span class="abbr" title="Algorithmic">Algo</span> (tempo)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Sapp</td>
+                                <td class="col-journal">ISMIR<sup>a</sup></td>
+                                <td class="col-year">2008</td>
+                                <td class="col-type">Method + Case</td>
+                                <td class="col-subject">Piano: <span class="highlight-green">Chopin mazurkas</span> (5 pieces)</td>
+                                <td class="col-recordings">232</td>
+                                <td class="col-process"><span class="abbr" title="Algorithmic">Algo</span> (hybrid similarity metrics)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Liem, Hanjalic</td>
+                                <td class="col-journal">ISMIR<sup>a</sup></td>
+                                <td class="col-year">2015</td>
+                                <td class="col-type">Method + Case</td>
+                                <td class="col-subject"><span class="highlight-blue">Orchestra</span>: Beethoven, R. Strauss</td>
+                                <td class="col-recordings">31</td>
+                                <td class="col-process"><span class="abbr" title="Algorithmic">Algo</span> (image-based)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Dorfer et al.</td>
+                                <td class="col-journal">ISMIR<sup>a</sup></td>
+                                <td class="col-year">2016</td>
+                                <td class="col-type">Methodology</td>
+                                <td class="col-subject">Piano (general)</td>
+                                <td class="col-recordings">—</td>
+                                <td class="col-process"><span class="highlight-blue">Neural nets</span> (score following)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Kosta et al.</td>
+                                <td class="col-journal">TENOR<sup>b</sup></td>
+                                <td class="col-year">2018</td>
+                                <td class="col-type"><span class="highlight-blue">Dataset</span> + Method</td>
+                                <td class="col-subject">Piano: <span class="highlight-green">Chopin mazurkas</span></td>
+                                <td class="col-recordings">2,239</td>
+                                <td class="col-process"><span class="highlight-red">Manual</span> + <span class="abbr" title="Algorithmic">Algo</span> (score-aligned data)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Yanchenko, Hoff</td>
+                                <td class="col-journal">Ann. Applied Stats</td>
+                                <td class="col-year">2020</td>
+                                <td class="col-type">Method + Case</td>
+                                <td class="col-subject"><span class="highlight-blue">Orchestra</span>: Beethoven</td>
+                                <td class="col-recordings">370</td>
+                                <td class="col-process"><span class="abbr" title="Algorithmic">Algo</span> (hierarchical <span class="abbr" title="Multidimensional Scaling">MDS</span>)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Zhou, Fabian</td>
+                                <td class="col-journal">Musicae Scientiae</td>
+                                <td class="col-year">2021</td>
+                                <td class="col-type">Method + Case</td>
+                                <td class="col-subject">Piano: Chopin (non-mazurkas)</td>
+                                <td class="col-recordings">2</td>
+                                <td class="col-process"><span class="highlight-red">Manual</span> (3D tempo model)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Zhang et al.</td>
+                                <td class="col-journal">ISMIR<sup>a</sup></td>
+                                <td class="col-year">2024</td>
+                                <td class="col-type"><span class="highlight-blue">Dataset</span> + Method + Case</td>
+                                <td class="col-subject">Piano: Chopin</td>
+                                <td class="col-recordings">137</td>
+                                <td class="col-process"><span class="highlight-red">Manual</span> + <span class="highlight-blue">ML models</span> (expertise ranking)</td>
+                            </tr>
+                            <tr>
+                                <td class="col-author">Guichaoua et al.</td>
+                                <td class="col-journal">Music & Science</td>
+                                <td class="col-year">2024</td>
+                                <td class="col-type">Method + Case</td>
+                                <td class="col-subject">Piano: <span class="highlight-green">Chopin mazurkas</span></td>
+                                <td class="col-recordings">37</td>
+                                <td class="col-process"><span class="abbr" title="Algorithmic">Algo</span> (Bayesian segmentation)</td>
+                            </tr>
+                        </tbody>
+                        <caption>
+                            <b>Table 1.</b> Selected journal and conference papers that have contributed research, ordered chronologically and
+                            categorized by the type of research, the type of music used as a target of analysis, the volume of pieces
+                            analyzed, and the applied process. Colors highlight some notable features, either due to their infrequency
+                            (non-methodological paper types) or those that are repeated (categories of musical subject matter).
+                        </caption>
+                    </table>
+                    <div class="table-footnotes">
+                        <p><sup>a</sup> International Society for Music Information Retrieval</p>
+                        <p><sup>b</sup> Technologies for Music Notation and Representation</p>
+                    </div>
+                </div>
+            </details>
+
+            <div class="lit-review-section">
+                 <div class="lit-review-item">
+                    <h3>Foundations in Performance Analysis</h3>
+                    <p>Early influential work involved breaking down performances into core components. Repp (1997) conducted experiments using digitally manipulated piano performances to isolate and evaluate specific attributes like timing and dynamics, even creating an "average" performance computationally. Cook (2007) applied early computational methods alongside manual analysis to study Chopin Mazurkas, highlighting the potential and challenges.</p>
+                </div>
+                <div class="lit-review-item">
+                    <h3>Methodological Development & Datasets</h3>
+                    <p>The field has seen numerous methodological proposals, often tested via case studies. Piano music, especially Chopin's Mazurkas, became a common focus due to its suitability for developing analytical techniques (Sapp, 2008; Kosta et al., 2018; Guichaoua et al., 2024). Methodologies evolved from hybrid numeric/rank metrics (Sapp, 2008) and manual/algorithmic approaches (Cook, 2007) to complex algorithmic techniques like hierarchical multidimensional scaling for orchestral works (Yanchenko & Hoff, 2020) and end-to-end Bayesian segmentation for piano (Guichaoua et al., 2024). The creation of large, annotated datasets like MazurkaBL (Kosta et al., 2018), containing score-aligned data for thousands of recordings, has been crucial for training and validating modern approaches.</p>
+                </div>
+                 <div class="lit-review-item">
+                    <h3>Machine Learning & Modern Approaches</h3>
+                    <p>Recent advancements leverage machine learning, including neural networks for tasks like score following (Dorfer et al., 2016) and deep learning for feature extraction and comparison (Zhang et al., 2024). Techniques from other domains, such as image-based analysis (Liem & Hanjalic, 2015) or methods like Siamese networks and contrastive learning, are being adapted for nuanced audio comparison. There's significant overlap with AI music generation research, as both fields tackle the challenge of deconstructing and understanding musical components.</p>
+                </div>
+            </div>
+            
+            
+
+            <br>
+            <div class="publication-venues-section">
+                <h4>Key Publication Venues</h4>
+                <p>The research in this proposal aligns with and draws from work frequently presented in the following key academic venues and communities:</p>
+                <ul>
+                    <li><strong>ISMIR (International Society for Music Information Retrieval):</strong> Primarily publishes through its annual international conference proceedings. Key papers often focus on computational analysis of music, music recommendation, and music data mining.</li>
+                    <li><strong>TENOR (Technologies for Music Notation and Representation):</strong> Focuses on its international conference proceedings (International Conference on Technologies for Music Notation and Representation). Explores digital technologies for music notation, representation, and interaction, including Optical Music Recognition (OMR), digital editions, and new forms of musical scores.</li>
+                    <li><strong>Musicae Scientiae:</strong> The Journal of the European Society for the Cognitive Sciences of Music (ESCOM). Publishes empirical, theoretical, and methodological articles on music cognition, perception, and performance.</li>
+                    <li><strong>Music Perception:</strong> An Interdisciplinary Journal. Publishes original empirical and theoretical papers on the perception and cognition of music, often covering topics like psychoacoustics, musical development, and cross-cultural music perception.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="research-context">
+            <h2>VII. Research Context: Who, Where, & When</h2>
+            
+            <h3>Why me?</h3>
+            <div class="musical-list-section">
+                <p>My background provides a unique foundation for this interdisciplinary project:</p>
+                <ul class="qualifications-list">
+                    <li><strong>Interdisciplinary Academics:</strong> Double degree in Informatics and German Studies, plus prior university studies in Computer Science and Music, demonstrating a long-term commitment to integrating technology, data analysis, arts, and humanities.</li>
+                    <li><strong>Initiative for Research:</strong> Successfully designed and executed self-guided research projects (e.g., self-conducted independent study courses, a critical Spotify API analysis for classical and solo piano repertoire, a sentiment analysis in Schubert's art song texts, etc.), showcasing proactive independent research capabilities specifically with unique music and data intersections.</li>
+                    <li><strong>Technical Skills:</strong> Proficiency in several coding languages, data visualization tools, AI frameworks, and full-stack web development fundamentals.</li>
+                    <li><strong>Domain Passion:</strong> A decade of passionate engagement with classical piano, including extensive curation of massive libraries for comparative listening, translation work focused on accessibility, special analysis projects, and broadcasting. This project directly addresses long-held research interests.</li>
+                    <li><strong>Communication Aptitude:</strong> Experience translating complex musical ideas into accessible formats for broad audiences (e.g., via broadcasting).</li>
+                </ul>
+            </div>
+
+            <h3>Why here?</h3>
+            <div class="musical-list-section">
+                <p>The University of Washington offers an unparalleled environment for this research:</p>
+                <ul class="musical-list">
+                    <li><strong>Interdisciplinary Hub:</strong> UW excels at fostering collaboration across departments like the iSchool, Computer Science & Engineering, Music, and DXARTS, providing access to world-class faculty in ML, HCI, MIR, digital humanities, and musicology.</li>
+                    <li><strong>Leading Research:</strong> Home to leading researchers and labs in relevant areas, including established ML/AI groups, HCI labs, and MIR researchers with expertise directly applicable to this project.</li>
+                    <li><strong>Technological Ecosystem:</strong> Seattle's position as a global tech hub provides a rich environment, potential industry connections, and access to cutting-edge developments.</li>
+                    <li><strong>Vibrant Arts Community:</strong> The city's strong support for the arts, including the renowned Seattle Symphony, offers potential for local impact, collaboration, and user study recruitment.</li>
+                </ul>
+            </div>
+
+            <h3>Why now?</h3>
+            <div class="musical-list-section">
+                <p>The timing is right for this research due to several key factors:</p>
+                <ul class="musical-list">
+                    <li><strong>Catching Up to a Long-Term Vision:</strong> I first had this idea 10 years ago and have always returned to it - what seemed unrealistic then has become feasible due to advances in machine learning and audio processing capabilities.</li>
+                    <li><strong>Machine Learning Maturity:</strong> Recent developments in ML have made large-scale audio analysis practical and accessible. The tools needed for sophisticated comparative analysis of musical performances are now available and well-documented.</li>
+                    <li><strong>Growing Research Foundation:</strong> Academic work in music information retrieval and computational musicology has established methodological foundations for this type of research, providing proven approaches to build upon.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="timeline">
+            <h2>VIII. The Path Forward: Timeline & Milestones</h2>
+            <p>A phased approach ensures manageable progress and allows for adaptation:</p>
+            <div class="timeline">
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3>Ensuring Methodological Feasibility</h3>
+                <p>The project's feasibility is underpinned by a research phases that leverage established audio processing techniques and contemporary machine learning advancements. The initial focus on piano repertoire provides a well-defined, data-rich domain for robust methodological development, systematic testing, and thorough validation.</p>
+            </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4>Phase 1 (Year 1): Foundation & Methodology</h4>
+                        <p>Deepen literature review, refine research questions, collect initial dataset (e.g., focusing on Chopin Mazurkas). Develop and validate core audio alignment and feature extraction pipeline. Implement first-generation difference detection models.</p>
+                        <br><p><strong>Milestone:</strong> 'First-generation' processing methodology; presentable preliminary results.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4>Phase 1 (Year 2): Model Refinement & Prototyping</h4>
+                        <p>Refine ML models (e.g., exploring Bayesian or contrastive approaches), explore advanced architectures. Begin design and early prototyping of the interactive frontend. Conduct initial feasibility tests and small-scale evaluations.</p>
+                        <br><p><strong>Milestone:</strong> Improved ML models; initial frontend prototype; potential conference paper [e.g., ISMIR].</p>
+                    </div>
+                </div>
+                 <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4>Phase 2 (Year 3): Frontend Development & Integration</h4>
+                        <p>Develop functional web-based exploration tool, integrating ML backend analysis. Design and implement core visualizations and interactions. Begin usability testing with target user groups.</p>
+                        <br><p><strong>Milestone:</strong> Working prototype of the interactive tool; publication on methodology/prototype.</p>
+                    </div>
+                </div>
+                 <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4>Phase 2 (Year 4): User Evaluation & Scaling</h4>
+                        <p>Conduct comprehensive user studies (qualitative/quantitative) with diverse participants. Scale analysis pipeline to larger corpus/different repertoire. Refine tool based on feedback. Explore initial pedagogical applications.</p>
+                        <br><p><strong>Milestone:</strong> User study results published; robust & scalable analysis pipeline.</p>
+                    </div>
+                </div>
+                 <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4>Phase 3 (Year 5+): Expansion, Synthesis & Dissemination</h4>
+                        <p>Explore potential expansions (e.g., other instruments, broader analysis features). Address revitalization goals more directly. Finalize research, write and defend dissertation. Seek high-impact publications.</p>
+                        <br><p><strong>Milestone:</strong> Completed dissertation; publications in higher-tier venues; potential public release/outreach component; grant applications for future work.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+         <section id="ethics">
+            <h2>IX. Ethical Considerations</h2>
+            <div class="musical-list-section">
+                <p>While aiming to enhance appreciation, potential risks must be addressed:</p>
+                <ul class="musical-list">
+                    <li><strong>Copyright:</strong> Primarily utilizing commercially available recordings for analysis under fair use principles for research. Focusing on feature analysis rather than audio redistribution unless licensed. Ensuring proper attribution to artists and labels.</li>
+                    <li><strong>Algorithmic Bias & Impact on Artistry:</strong> Acknowledging potential biases in recording availability and algorithmic analysis. Critically considering how analytical tools might influence performance practice – avoiding over-centralization around an "average" or conversely, over-valuing algorithmically flagged "uniqueness" at the expense of musicality. The goal is to provide insight, not dictate artistic norms.</li>
+                    <li><strong>Data Representation:</strong> Ensuring that the chosen features and models capture musically meaningful aspects of interpretation, rather than arbitrary signal characteristics.</li>
+                    <li><strong>User Privacy:</strong> Ensuring anonymity and data security if user interaction data is collected during evaluations.</li>
+                    <li><strong>Accessibility:</strong> Designing the frontend tool with accessibility principles in mind for diverse users.</li>
+                </ul>
+            </div>
+        </section>
+
+         <section id="references">
+            <h2>X. References</h2>
+            <div class="lit-review-section">
+                <ul style="font-size: 0.9rem; list-style-type: none; padding-left: 0; margin-top: 1rem;">
+                    <li>Cook, N. (2007). Performance analysis and Chopin's mazurkas. <i>Musicae Scientiae, 11</i>(2), 183-207. https://doi.org/10.1177/102986490701100203</li>
+                    <li>Dorfer, M., Arzt, A., & Widmer, G. (2016). Towards score following in sheet music images. <i>Proceedings of the 17th International Society for Music Information Retrieval Conference (ISMIR)</i>. https://doi.org/10.48550/arXiv.1612.05050</li>
+                    <li>Guichaoua, C., Lascabettes, P., & Chew, E. (2024). End-to-end Bayesian segmentation and similarity assessment of performed music tempo and dynamics without score information. <i>Music & Science, 7</i>. https://doi.org/10.1177/20592043241233411</li>
+                    <li>Kosta, K., Bandtlow, O. F., & Chew, E. (2018). MazurkaBL: Score-aligned loudness, beat, and expressive markings data for 2,000 Chopin mazurka recordings. <i>Proceedings of the 4th International Conference on Technologies for Music Notation and Representation (TENOR)</i>, 85-94.</li>
+                    <li>Liem, C. C. S., & Hanjalic, A. (2015). Comparative analysis of orchestral performance recordings: An image-based approach. <i>Proceedings of the 16th International Society for Music Information Retrieval Conference (ISMIR)</i>, 302-308.</li>
+                    <li>Müller, M. (2015). <i>Fundamentals of Music Processing</i>. Springer.</li>
+                    <li>Repp, B. H. (1997). The aesthetic quality of a quantitatively average music performance: Two preliminary experiments. <i>Music Perception, 14</i>(4), 419-444. https://doi.org/10.2307/40285732</li>
+                    <li>Sapp, C. S. (2008). Hybrid numeric/rank similarity metrics for musical performance analysis. <i>Proceedings of the 9th International Society for Music Information Retrieval Conference (ISMIR)</i>, 501-506.</li>
+                    <li>Widmer, G. (2016). Getting Closer to the Essence of Music: The Mazurka Project. <i>ACM Transactions on Intelligent Systems and Technology (TIST), 7</i>(3), 1-26. https://doi.org/10.1145/2724718</li>
+                    <li>Yanchenko, A. K., & Hoff, P. D. (2020). Hierarchical multidimensional scaling for the comparison of musical performance styles. <i>Annals of Applied Statistics, 14</i>(4), 1581-1603. https://doi.org/10.1214/20-AOAS1391</li>
+                    <li>Zhang, H., Liang, J., & Dixon, S. (2024). From audio encoders to piano judges: benchmarking performance understanding for solo piano. <i>arXiv preprint arXiv:2407.04518</i>. https://doi.org/10.48550/arXiv.2407.04518</li>
+                    <li>Zhou, D. Q., & Fabian, D. (2021). A three-dimensional model for evaluating individual differences in tempo and tempo variation in musical performance. <i>Musicae Scientiae, 25</i>(2), 252-267. https://doi.org/10.1177/1029864919873193</li>                </ul>
+            </div>
+        </section>
+
+    </div> <footer>
+        &copy; [Year] [Your Name] | PhD Proposal Draft
+    </footer>
+
+    <script>
+            // --- Background Audio Control ---
+            const audio = document.getElementById('background-waltz');
+            const audioControl = document.getElementById('audio-control');
+            const audioIcon = audioControl.querySelector('i');
+
+            // --- CONFIGURATION ---
+            const targetVolume = 0.21; // The volume level to fade to (0.0 to 1.0)
+            const fadeDurationSeconds = 1.0; // Duration of the fade in/out in seconds
+            const startOffsetSeconds = 27; // Start playback X seconds into the track
+            // --- END CONFIGURATION ---
+
+            audio.loop = true; // Ensure loop is set
+            audio.muted = true; // Start muted
+            audio.volume = 0; // Start volume at 0 for fade-in
+
+            let hasPlayed = false; // Flag to track if play() has been called successfully
+            let fadeInterval = null; // To store the interval ID for clearing
+
+            // Function to handle fade logic
+            function fadeAudio(fadeIn) {
+                clearInterval(fadeInterval); // Clear any existing fade interval
+
+                const fadeSteps = 50; // Number of steps in the fade
+                const intervalDuration = (fadeDurationSeconds * 1000) / fadeSteps;
+                const volumeStep = targetVolume / fadeSteps;
+                let currentVolume = audio.volume;
+
+                if (fadeIn) {
+                    audio.muted = false; // Unmute before starting fade-in
+                    audioIcon.classList.remove('fa-volume-mute');
+                    audioIcon.classList.add('fa-volume-up');
+
+                    // Start playback if it's the first time
+                    if (!hasPlayed) {
+                        try {
+                            // Set start time *before* playing
+                            audio.currentTime = startOffsetSeconds;
+                            console.log(`Set audio start time to ${startOffsetSeconds}s`);
+
+                            audio.play().then(() => {
+                                console.log("Audio playback initiated for fade-in.");
+                                hasPlayed = true;
+                            }).catch(error => {
+                                console.error("Audio playback failed on first play:", error);
+                                // Revert UI if play fails
+                                audio.muted = true;
+                                audio.volume = 0;
+                                audioIcon.classList.add('fa-volume-mute');
+                                audioIcon.classList.remove('fa-volume-up');
+                                return; // Stop fade if play failed
+                            });
+                        } catch (e) {
+                             console.error("Error setting current time or playing:", e);
+                             // Revert UI if setting time/play fails
+                             audio.muted = true;
+                             audio.volume = 0;
+                             audioIcon.classList.add('fa-volume-mute');
+                             audioIcon.classList.remove('fa-volume-up');
+                             return; // Stop fade
+                        }
+                    }
+
+                    // Start fade-in interval
+                    fadeInterval = setInterval(() => {
+                        currentVolume += volumeStep;
+                        if (currentVolume >= targetVolume) {
+                            audio.volume = targetVolume;
+                            clearInterval(fadeInterval);
+                            console.log("Fade-in complete.");
+                        } else {
+                            audio.volume = currentVolume;
+                        }
+                    }, intervalDuration);
+
+                } else { // Fading out
+                    audioIcon.classList.remove('fa-volume-up');
+                    audioIcon.classList.add('fa-volume-mute');
+
+                    fadeInterval = setInterval(() => {
+                        currentVolume -= volumeStep;
+                        if (currentVolume <= 0) {
+                            audio.volume = 0;
+                            audio.muted = true; // Mute only after volume is 0
+                            clearInterval(fadeInterval);
+                            console.log("Fade-out complete.");
+                        } else {
+                            audio.volume = currentVolume;
+                        }
+                    }, intervalDuration);
+                }
+            }
+
+            // Event listener for the control icon
+            audioControl.addEventListener('click', () => {
+                if (audio.muted || audio.volume < targetVolume) { // If muted OR currently fading out/at 0
+                    fadeAudio(true); // Fade In
+                } else {
+                    fadeAudio(false); // Fade Out
+                }
+            });
+
+            // No automatic play attempts needed anymore
+
+    </script>
+
+    <script>
+        // Simple Intersection Observer for scroll animations
+        // Targets elements with the class 'section'
+        const animatedElements = document.querySelectorAll('section');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Optional: Unobserve after animation to save resources
+                    // observer.unobserve(entry.target);
+                }
+                // Optional: Reset animation if element scrolls out of view
+                // else {
+                //     entry.target.classList.remove('visible');
+                // }
+            });
+        }, {
+            threshold: 0.05 // Trigger slightly earlier
+        });
+
+        animatedElements.forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+
+    <script>
+        // Enhanced smooth animation for expandable tables
+        document.addEventListener('DOMContentLoaded', function() {
+            const expandableTables = document.querySelectorAll('.expandable-table');
+            
+            expandableTables.forEach(table => {
+                const details = table;
+                const summary = details.querySelector('summary');
+                const content = details.querySelector('.table-content-wrapper');
+                
+                // Store the original height
+                let contentHeight = 0;
+                let isInitialized = false;
+                
+                // Initialize the table state properly
+                function initializeTable() {
+                    const wasOpen = details.open;
+                    
+                    if (wasOpen) {
+                        // If starting open, measure and set directly without animation prep
+                        details.open = true; // Ensure it's marked open for scrollHeight calc
+                        contentHeight = content.scrollHeight;
+                        content.style.maxHeight = 'none'; // Allow full height
+                        content.style.opacity = '1';
+                        content.style.padding = '1rem';
+                    } else {
+                        // If starting closed, measure then set to 0 for animation
+                        details.open = true; // Temporarily open to measure
+                        contentHeight = content.scrollHeight;
+                        details.open = false; // Close it back
+                        
+                        content.style.maxHeight = '0px';
+                        content.style.opacity = '0';
+                        content.style.padding = '0 1rem';
+                    }
+                    
+                    // Force a reflow to ensure styles are applied before isInitialized is true
+                    content.offsetHeight;
+                    isInitialized = true;
+                    // console.log(`Table initialized. WasOpen: ${wasOpen}, contentHeight: ${contentHeight}, currentMaxHeight: ${content.style.maxHeight}`);
+                }
+                
+                // Initialize after a brief delay to ensure CSS is loaded
+                // Using requestAnimationFrame for better timing with rendering
+                requestAnimationFrame(() => setTimeout(initializeTable, 10));
+                
+                // Handle the toggle event
+                summary.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent default details behavior
+                    
+                    // Ensure initialization is complete
+                    if (!isInitialized) {
+                        initializeTable();
+                    }
+                    
+                    if (details.open) {
+                        // Closing animation
+                        content.style.maxHeight = contentHeight + 'px';
+                        // Force reflow
+                        content.offsetHeight;
+                        content.style.maxHeight = '0px';
+                        content.style.opacity = '0';
+                        content.style.padding = '0 1rem';
+                        
+                        // Close the details after animation
+                        setTimeout(() => {
+                            details.open = false;
+                        }, 400);
+                    } else {
+                        // Opening animation
+                        details.open = true;
+                        // Recalculate height in case content changed
+                        contentHeight = content.scrollHeight;
+                        
+                        // Use requestAnimationFrame to ensure smooth animation on first click
+                        requestAnimationFrame(() => {
+                            content.style.maxHeight = contentHeight + 'px';
+                            content.style.opacity = '1';
+                            content.style.padding = '1rem';
+                            
+                            // After animation completes, remove max-height restriction
+                            setTimeout(() => {
+                                content.style.maxHeight = 'none';
+                            }, 400);
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script>
+        // Interactive mockup functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const svg = document.getElementById('timeline-svg');
+            const playhead = document.getElementById('playhead');
+            const playheadHitArea = document.getElementById('playhead-hitarea');
+            const exploreMoment = document.getElementById('explore-moment');
+            const recordingsSection = document.getElementById('recordings-section');
+            const playheadLabel = document.getElementById('playhead-label'); // Get the new label element
+            
+            if (svg && playhead && playheadHitArea && exploreMoment && recordingsSection && playheadLabel) {
+                let isDragging = false;
+                let currentPosition = 50;
+                
+                // Climax point where playhead locks and reveals content
+                const climaxPoint = 150;
+                const lockRange = 20; // Range around climax point where it locks
+                
+                function updatePlayheadPosition(x) {
+                    // Check if near climax point
+                    if (Math.abs(x - climaxPoint) <= lockRange) {
+                        // Lock to climax point
+                        currentPosition = climaxPoint;
+                        playhead.setAttribute('x1', climaxPoint);
+                        playhead.setAttribute('x2', climaxPoint);
+                        playheadHitArea.setAttribute('x1', climaxPoint);
+                        playheadHitArea.setAttribute('x2', climaxPoint);
+                        
+                        // Show "Explore this moment" text and recordings section immediately
+                        exploreMoment.style.opacity = '1';
+                        recordingsSection.style.opacity = '1';
+                        
+                        // Remove click handler since recordings are already visible
+                        exploreMoment.style.cursor = 'default';
+                        exploreMoment.onclick = null;
+                    } else {
+                        // Normal behavior
+                        currentPosition = Math.max(0, Math.min(300, x));
+                        playhead.setAttribute('x1', currentPosition);
+                        playhead.setAttribute('x2', currentPosition);
+                        playheadHitArea.setAttribute('x1', currentPosition);
+                        playheadHitArea.setAttribute('x2', currentPosition);
+                        
+                        // Hide elements
+                        exploreMoment.style.opacity = '0';
+                        exploreMoment.style.cursor = 'default';
+                        exploreMoment.onclick = null;
+                        recordingsSection.style.opacity = '0';
+                    }
+                    // Update playhead label position
+                    if (playheadLabel) { // Ensure label exists
+                        playheadLabel.setAttribute('x', currentPosition);
+                    }
+                }
+                
+                // Mouse events for dragging
+                function startDrag(e) {
+                    isDragging = true;
+                    playhead.style.cursor = 'grabbing';
+                    playheadHitArea.style.cursor = 'grabbing';
+                    e.preventDefault();
+                }
+                
+                function drag(e) {
+                    if (!isDragging) return;
+                    
+                    const rect = svg.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 300;
+                    updatePlayheadPosition(x);
+                }
+                
+                function stopDrag() {
+                    isDragging = false;
+                    playhead.style.cursor = 'grab';
+                    playheadHitArea.style.cursor = 'grab';
+                }
+                
+                // Click anywhere on SVG to move playhead
+                svg.addEventListener('click', function(e) {
+                    if (!isDragging) {
+                        const rect = svg.getBoundingClientRect();
+                        const x = ((e.clientX - rect.left) / rect.width) * 300;
+                        updatePlayheadPosition(x);
+                    }
+                });
+                
+                // Dragging events
+                playheadHitArea.addEventListener('mousedown', startDrag);
+                playhead.addEventListener('mousedown', startDrag);
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+                
+                // Initialize playhead position
+                updatePlayheadPosition(50);
+            }
+        });
+    </script>
+
+</body>
+</html>
