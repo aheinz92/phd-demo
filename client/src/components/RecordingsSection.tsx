@@ -52,6 +52,7 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
   const backImageRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [modalArtAspectRatio, setModalArtAspectRatio] = useState<string>('1 / 1'); // Default to square
+  const initialBodyStylesRef = useRef<{ overflow: string; paddingRight: string } | null>(null);
 
   const [shouldRender, setShouldRender] = useState(isVisible);
   const [isHiding, setIsHiding] = useState(false);
@@ -86,6 +87,57 @@ export function RecordingsSection({ recordings, isVisible, className = "", onRec
       setZoomLevel(MIN_ZOOM); // Reset zoom when flipping away from back
     }
   }, [isFlipped]);
+
+  const getScrollbarWidth = () => {
+    const outer = document.createElement('div');
+    outer.style.visibility = 'hidden';
+    outer.style.overflow = 'scroll';
+    document.body.appendChild(outer);
+    const inner = document.createElement('div');
+    outer.appendChild(inner);
+    const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+    outer.parentNode?.removeChild(outer);
+    return scrollbarWidth;
+  };
+
+  // Effect to lock/unlock page scroll when magnifier is active
+  useEffect(() => {
+    // Capture initial computed body styles only once
+    if (!initialBodyStylesRef.current) {
+      const computedStyle = window.getComputedStyle(document.body);
+      initialBodyStylesRef.current = {
+        overflow: computedStyle.overflow,
+        paddingRight: computedStyle.paddingRight,
+      };
+    }
+
+    const originalStyles = initialBodyStylesRef.current;
+    let appliedPadding = false;
+
+    if (isMagnifierVisible) {
+      // Check if content overflows the viewport height, indicating a scrollbar would normally be present
+      const wouldHaveScrollbar = document.body.scrollHeight > window.innerHeight;
+      
+      if (wouldHaveScrollbar) {
+        const scrollbarWidth = getScrollbarWidth();
+        if (scrollbarWidth > 0) { // Ensure scrollbar has a width
+          document.body.style.paddingRight = `${scrollbarWidth}px`;
+          appliedPadding = true;
+        }
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore initial styles
+      document.body.style.overflow = originalStyles.overflow;
+      document.body.style.paddingRight = originalStyles.paddingRight;
+    }
+
+    return () => {
+      // Ensure styles are restored on unmount
+      document.body.style.overflow = originalStyles.overflow;
+      document.body.style.paddingRight = originalStyles.paddingRight;
+    };
+  }, [isMagnifierVisible]);
 
   // Effect for audio player setup (create instance once) and unmount cleanup
   useEffect(() => {
