@@ -53,13 +53,10 @@ const PhdProposalPage: React.FC = () => {
     };
   }, []); // Empty dependency array ensures this runs only once after the initial render
 useEffect(() => {
-    console.log('[DEBUG] useEffect for table interactivity RUNNING.');
     const literatureReviewSection = document.getElementById('literature'); // CORRECTED ID
     if (!literatureReviewSection) {
-      console.error('[DEBUG] CRITICAL: Literature section with ID "literature" NOT FOUND. Expandable table functionality will not work.');
       return;
     }
-    console.log('[DEBUG] Literature section with ID "literature" FOUND:', literatureReviewSection);
 
     const detailsElements = Array.from(literatureReviewSection.querySelectorAll<HTMLDetailsElement>('details.expandable-table')); // Made selector more specific
     const expandAllButton = document.getElementById('expand-all-button') as HTMLButtonElement | null;
@@ -75,21 +72,15 @@ useEffect(() => {
       const initialIsOpen = detailsEl.open;
       summaryEl.setAttribute('aria-expanded', initialIsOpen.toString());
       detailsEl.dataset.open = initialIsOpen.toString();
-      console.log(`[DEBUG] Initial state for a details element: open=${initialIsOpen}, aria-expanded=${initialIsOpen}`);
 
       const handleToggle = () => {
         const currentOpenState = detailsEl.open; // This reflects the NEW state after the toggle
-        console.log(`[DEBUG] 'toggle' event on <details>. New open state: ${currentOpenState}`);
         summaryEl.setAttribute('aria-expanded', currentOpenState.toString());
         detailsEl.dataset.open = currentOpenState.toString();
 
         // Log active element to check focus (summary should retain focus natively)
         setTimeout(() => {
-          console.log('[DEBUG] Active element after "toggle" event processing:', document.activeElement);
-          if (document.activeElement === summaryEl) {
-            console.log('[DEBUG] Summary element HAS focus after "toggle".');
-          } else {
-            console.log('[DEBUG] Summary element DOES NOT have focus after "toggle". Focused element:', document.activeElement, "Attempting to re-focus summary.");
+          if (document.activeElement !== summaryEl) {
             summaryEl.focus(); // Explicitly re-focus if lost
           }
         }, 0);
@@ -128,13 +119,11 @@ useEffect(() => {
     if (expandAllButton) {
       expandAllButton.addEventListener('click', handleExpandAll);
     } else {
-      // console.warn('Expand All button with ID "expand-all-button" not found.');
     }
 
     if (collapseAllButton) {
       collapseAllButton.addEventListener('click', handleCollapseAll);
     } else {
-      // console.warn('Collapse All button with ID "collapse-all-button" not found.');
     }
 
     return () => {
@@ -149,8 +138,7 @@ useEffect(() => {
       }
     };
   }, []); // Empty dependency array: runs once on mount, cleans up on unmount
-
-  return (
+return (
     <>
       <header>
         <svg id="header-ornament" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
@@ -340,7 +328,7 @@ useEffect(() => {
             <h2>VI. Review of Literature</h2>
             <p>This project builds upon decades of research evolving from manual analysis to sophisticated computational methods in Music Information Retrieval (MIR), audio signal processing, machine learning, and computational musicology. Early efforts often involved manual data creation, while recent work has finally begun leveraging algorithmic processing and large datasets.</p>
  
-            <details className="expandable-table" open>
+            <details className="expandable-table">
                 <summary>Table 1: Selected Literature on Music Data Analysis</summary>
                 <div className="table-content-wrapper">
                     <table className="literature-table">
